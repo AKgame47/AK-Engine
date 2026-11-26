@@ -46,7 +46,7 @@ AK's instruction (26 Nov, 18:41 IST): work is continuous until the engine is don
 ## Decisions
 
 - 2026-11-27, AK: asset creation and animation happen inside the engine ("own Blender"), not through an external Blender bridge. glTF import stays as a complement for free third-party assets.
-- 2026-11-27, AK: use Blender source code directly for the in-engine modelling and animation tools. AK Engine is now GPL-3.0 (`LICENSE`). Godot MIT and O3DE Apache-2.0/MIT code stay under their own notices inside the combined work. Details and rules: `docs/LICENSE-AUDIT.md`. Open point for AK: keep Blender-derived code editor-only so exported games are not forced to GPL.
+- 2026-11-27, AK: use Blender source code directly for the in-engine modelling and animation tools. AK Engine is now GPL-3.0 (`LICENSE`). Godot MIT and O3DE Apache-2.0/MIT code stay under their own notices inside the combined work. Details and rules: `docs/LICENSE-AUDIT.md`. AK confirmed on 2026-11-27: Blender-derived code stays editor-only. Exported games ship the Godot MIT runtime plus AK runtime code, no GPL.
 - Package id stays com.akstudio.akenginedemo for now.
 
 ## Phase 2 replaced: In-engine asset creation (modelling and animation)
