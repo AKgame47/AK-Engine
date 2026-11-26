@@ -1,0 +1,141 @@
+name: android-export
+# Builds the Android arm64 release template from pinned upstream Godot 4.7.2 (AK name patch), exports the demo as a debug-signed APK, verifies it with aapt2/apksigner. Not run on a device.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri
+      - name: Android SDK and NDK
+        run: |
+          export ANDROID_HOME=${ANDROID_HOME:-/usr/local/lib/android/sdk}
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          SM=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
+          ls $ANDROID_HOME
+          yes | $SM --licenses > /dev/null || true
+          $SM "ndk;29.0.14206865" "platforms;android-36" "build-tools;36.1.0" "platform-tools" 2>&1 | tail -5
+          ls $ANDROID_HOME/ndk $ANDROID_HOME/build-tools
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-android-${{ github.run_id }}
+          restore-keys: |
+            scons-android-
+            scons-export-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Build Android arm64 release template
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=android target=template_release arch=arm64 generate_android_binaries=yes debug_symbols=no module_raycast_enabled=no -j$(nproc) 2>&1 | tee ../template-build.log
+      - name: Locate template APK
+        run: ls -la godot/bin
+      - name: Debug keystore and editor settings
+        run: |
+          mkdir -p $HOME/.config/godot build
+          keytool -genkeypair -v -keystore $GITHUB_WORKSPACE/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=AK Engine Debug,O=AK Studio,C=IN"
+          cat > $HOME/.config/godot/editor_settings-4.7.tres <<EOT
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOT
+          sed -i 's/^          //' $HOME/.config/godot/editor_settings-4.7.tres
+          cat $HOME/.config/godot/editor_settings-4.7.tres
+      - name: Add Android preset
+        run: |
+          TPL=$GITHUB_WORKSPACE/godot/bin/android_release.apk
+          KS=$GITHUB_WORKSPACE/debug.keystore
+          cat >> project/export_presets.cfg <<EOT
+
+          [preset.1]
+
+          name="Android"
+          platform="Android"
+          runnable=true
+          advanced_options=false
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path=""
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.1.options]
+
+          custom_template/debug=""
+          custom_template/release="$TPL"
+          gradle_build/use_gradle_build=false
+          architectures/armeabi-v7a=false
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug="$KS"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+          keystore/release="$KS"
+          keystore/release_user="androiddebugkey"
+          keystore/release_password="android"
+          version/code=1
+          version/name="0.1"
+          package/unique_name="com.akstudio.akenginedemo"
+          package/name="AK Engine Demo"
+          package/signed=true
+          screen/immersive_mode=true
+          EOT
+          sed -i 's/^          //' project/export_presets.cfg
+          tail -45 project/export_presets.cfg
+      - name: Export APK
+        run: |
+          xvfb-run -a ./godot/bin/godot.linuxbsd.editor.x86_64 --headless --path project --export-release Android ../build/ak-demo-arm64.apk 2>&1 | tee export-android.log
+          ls -la build
+      - name: Verify APK
+        run: |
+          BT=$ANDROID_HOME/build-tools/36.1.0
+          $BT/aapt2 dump badging build/ak-demo-arm64.apk | grep -E "package:|application-label|native-code|sdkVersion|targetSdk" | tee verify-apk.log
+          $BT/apksigner verify --verbose build/ak-demo-arm64.apk 2>&1 | head -8 | tee -a verify-apk.log
+          unzip -l build/ak-demo-arm64.apk | grep -E "\.so|\.pck|assets" | head -10 | tee -a verify-apk.log
+          ls -la build/ak-demo-arm64.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ak-demo-android-arm64
+          path: |
+            build/ak-demo-arm64.apk
+            export-android.log
+            verify-apk.log
+            template-build.log
+      - name: Publish APK release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create android-demo-run${{ github.run_number }} build/ak-demo-arm64.apk export-android.log verify-apk.log --repo "$GITHUB_REPOSITORY" --title "AK Engine demo (Android arm64) run ${{ github.run_number }}" --notes "Built by CI from $GITHUB_SHA. Debug-signed, not tested on a device. Install requires allowing unknown sources." --prerelease
