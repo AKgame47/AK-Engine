@@ -22,3 +22,18 @@ Every "Implemented" row has a link to the CI run, release or file that shows it.
 Merges: PR #1 (186b1d4) and PR #2 (4b4a74d) came from external AI branches under friday/. Each was reviewed, scripts read, and CI-tested before merge.
 
 Completion (verified milestones only): Phase 0 done. Phase 1: library, build, render proof, editor launch and Linux export are done. Repo-level build docs are still missing.
+
+## Phase order (from the master directive, section 15)
+
+AK's instruction (26 Nov, 18:41 IST): work is continuous until the engine is done. Nothing below is claimed done until it has a link in the table above.
+
+| Phase | Scope | State | Next concrete step |
+|---|---|---|---|
+| 0 Research | Source analysis, licence audit | Docs done, dependency-tree audit open | Audit O3DE and Blender dependency trees |
+| 1 Foundation | Repo, build, branding, first editor, exported 3D scene | Mostly done (see table). Missing: AK-branded editor, repo build docs, Android export result | Apply branding/ theme, icon and splash to the editor build; rename binary |
+| 2 Asset Studio | glTF import, Blender headless bridge, modelling, animation, export | Not started | glTF import test in CI, Blender bridge script with CI test |
+| 3 Advanced graphics | O3DE-derived or equivalent rendering | Not started | Research which O3DE renderer parts are portable; prototype in isolation |
+| 4 Open world | Terrain, streaming, partitioning, NPCs, vehicles | Not started | Terrain and chunk streaming prototype |
+| 5 Android and Web | Mobile and browser profiles, real-device tests | Android export CI in progress. No device test possible yet. | Web export build; device test needs a person with a phone |
+| 6 AI integration | Dev assistance, optimisation | Not started | After Phase 2 |
+| 7 Production readiness | Test, regressions, stable releases | Not started | Ongoing regression CI |
