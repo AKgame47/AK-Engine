@@ -1,0 +1,10 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+config/name="AK Engine Smoke Scene"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7")
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
