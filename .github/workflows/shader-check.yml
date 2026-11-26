@@ -46,6 +46,18 @@ jobs:
           xvfb-run -a -s "-screen 0 1280x720x24" ./shaders/run-preview.sh --capture $GITHUB_WORKSPACE/shore.png 2>&1 | tee -a shader-check.log || true
           ls -la shore.png
           grep -ciE 'SHADER ERROR|Parse Error|Failed' shader-check.log || true
+      - name: Foundry studio check and capture
+        if: always()
+        run: |
+          export GODOT=$GITHUB_WORKSPACE/godot/bin/godot.linuxbsd.editor.x86_64
+          if [ -f branding/foundry/ui/launch.sh ]; then
+            chmod +x branding/foundry/ui/launch.sh
+            xvfb-run -a -s "-screen 0 1440x900x24" branding/foundry/ui/launch.sh --check 2>&1 | tee studio-check.log
+            xvfb-run -a -s "-screen 0 1440x900x24" branding/foundry/ui/launch.sh --capture $GITHUB_WORKSPACE/studio.png 2>&1 | tee -a studio-check.log || true
+            ls -la studio.png || true
+          else
+            echo "no foundry ui in this ref" | tee studio-check.log
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -53,9 +65,11 @@ jobs:
           path: |
             shore.png
             shader-check.log
+            studio.png
+            studio-check.log
       - name: Publish capture
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create shader-check-run${{ github.run_number }} shore.png shader-check.log --repo "$GITHUB_REPOSITORY" --title "Shader check run ${{ github.run_number }}" --notes "CI capture of ${{ github.event.inputs.ref }} at $GITHUB_SHA. Software rendering (llvmpipe)." --prerelease || true
+          gh release create shader-check-run${{ github.run_number }} $(ls shore.png shader-check.log studio.png studio-check.log 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "Shader check run ${{ github.run_number }}" --notes "CI capture of ${{ github.event.inputs.ref }} at $GITHUB_SHA. Software rendering (llvmpipe)." --prerelease || true
