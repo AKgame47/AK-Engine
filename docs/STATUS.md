@@ -1,4 +1,4 @@
-# Status (updated 2026-11-26, 18:30 IST)
+# Status (updated 2026-11-26, 19:10 IST)
 
 Every "Implemented" row has a link to the CI run, release or file that shows it. Everything else is not done.
 
@@ -14,12 +14,13 @@ Every "Implemented" row has a link to the CI run, release or file that shows it.
 | Shader library (water, sky, foliage) and sample glTF props | Implemented, renders in CI (software rendering, stylized, low-poly, not realistic). No GPU or mobile performance data. | Run 45820727265, release shader-check-run1 |
 | AK Studio UI | UI concept only: a standalone Godot app showing a workbench layout (scene tree, viewport, inspector). It is not the shipping editor. | Run 45822464749, release shader-check-run2 |
 | Branding assets (logo, icon, splash, editor theme file) | Files merged. Not yet applied to the engine editor build. | branding/ |
-| Forge ident video (Blender scripts) | Scripts merged. Never run in CI, untested. | branding/foundry/motion/ |
-| Android export | In progress: first CI run started 18:27, result unknown. | run 45824460766 |
+| Android export (arm64 demo APK) | Builds from source in CI, APK verifies with apksigner (v2/v3, debug key). Not run on any device or emulator. | Run 45828048503, release android-demo-run2 |
+| AK splash and app icon in the editor build (AK's red-and-white logo) | Splash verified in a running-editor screenshot. Icon not visually checked. Editor UI and theme are still stock. | Run 45829201524, release ak-editor-run2 |
+| Forge ident animation | Rendered in CI with Blender 4.5.9 (Cycles CPU), QA script passed; stills viewed, audio not listened to. | Run 45828518262, release ident-render-run1 |
 | Raycast/Embree module | Disabled because the bundled Embree failed to link in run #1. To revisit. | run 45789587511 |
 | Renderer upgrades, Asset Studio (Blender bridge), world streaming, physics, AI, AAOS, Web, benchmarks, South Kayal game | Planned. No code. No measurements. | none |
 
-Merges: PR #1 (186b1d4) and PR #2 (4b4a74d) came from external AI branches under friday/. Each was reviewed, scripts read, and CI-tested before merge.
+Merges: PR #1 (186b1d4), PR #2 (4b4a74d) and PR #3 (3c0c2e5) came from external AI branches under friday/. Each was reviewed, scripts read, and CI-tested before merge.
 
 Completion (verified milestones only): Phase 0 done. Phase 1: library, build, render proof, editor launch and Linux export are done. Repo-level build docs are still missing.
 
