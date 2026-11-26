@@ -1,0 +1,61 @@
+name: export-linux-demo
+# Builds the Linux release export template from pinned upstream Godot 4.7.2 (AK name patch), then exports the demo scene.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-export-${{ github.run_id }}
+          restore-keys: |
+            scons-export-
+            scons-linux-editor-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Build Linux release template
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=template_release arch=x86_64 debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Export demo
+        run: |
+          TPL=$GITHUB_WORKSPACE/godot/bin/godot.linuxbsd.template_release.x86_64
+          ls -la $TPL
+          sed -i "s#TEMPLATE_PATH#$TPL#" project/export_presets.cfg
+          mkdir -p build
+          xvfb-run -a ./godot/bin/godot.linuxbsd.editor.x86_64 --headless --path project --export-release Linux ../build/ak-demo.x86_64 2>&1 | tee export.log
+          ls -la build
+      - name: Run exported build and capture a frame
+        run: |
+          chmod +x build/ak-demo.x86_64
+          xvfb-run -a -s "-screen 0 1280x720x24" timeout 60 ./build/ak-demo.x86_64 --rendering-driver opengl3 --quit-after 120 2>&1 | tee run-export.log || true
+          du -h build/ak-demo.x86_64
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ak-demo-linux-x86_64
+          path: |
+            build/ak-demo.x86_64
+            export.log
+            run-export.log
