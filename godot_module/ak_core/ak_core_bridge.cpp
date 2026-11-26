@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 #include "ak_core_bridge.h"
 
+#include "core/object/class_db.h"
+#include "core/object/method_bind.h"
+
 #include <string_view>
 
 int64_t AKCore::asset_id(const String &p_path) {
