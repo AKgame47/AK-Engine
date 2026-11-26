@@ -24,5 +24,5 @@ Rules that follow:
 1. Keep every upstream copyright and SPDX header on copied or ported files. Record the origin file and commit in `THIRD_PARTY_NOTICES.md` (not yet written).
 2. Blender third-party libraries (its `lib` repo, e.g. OpenSubdiv, OpenVDB, Embree) have their own licences. Only take code authored by the Blender project unless that library is audited first. Not yet audited.
 3. Do not take Qt (LGPL-3.0, separate terms) from O3DE.
-4. Exported games: if Blender-derived code stays in editor-only tools, exported games ship only the engine runtime (Godot MIT plus AK runtime code). If Blender-derived code goes into the runtime, exported games become GPL too. Keep Blender-derived code editor-only unless AK decides otherwise. This needs AK's explicit confirmation.
+4. Exported games (AK's decision, confirmed 2026-11-27): Blender-derived code stays EDITOR-ONLY. Exported games ship only the Godot MIT runtime plus AK runtime code, with no GPL code. Never put Blender-derived code in runtime modules or export templates.
 5. The MIT statement in earlier sections of this file is superseded for new code by the GPL-3.0 decision above.
