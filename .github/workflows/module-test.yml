@@ -1,0 +1,64 @@
+name: ak-module-test
+# Builds the AK editor, builds the Godot editor with the AK Core C++ module (godot_module/ak_core) compiled in, then calls it from GDScript and checks results against independently computed values. Fails if any check fails. Fails the job if the import or the check fails.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri imagemagick
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-akeditor-${{ github.run_id }}
+          restore-keys: |
+            scons-akeditor-
+            scons-export-
+      - name: Add AK Core module
+        run: |
+          mkdir -p godot/modules/ak_core/ak
+          cp godot_module/ak_core/* godot/modules/ak_core/
+          cp core/include/ak/core.hpp godot/modules/ak_core/ak/core.hpp
+          cp core/src/core.cpp godot/modules/ak_core/ak_core_impl.cpp
+          sed -i 's|#include "ak/core.hpp"|#include "ak/core.hpp"|' godot/modules/ak_core/ak_core_impl.cpp
+          ls -R godot/modules/ak_core
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Run module check
+        run: |
+          mkdir -p mt
+          cp tools/module-test/check.gd mt/check.gd
+          printf 'config_version=5\n\n[application]\nconfig/name="module-test"\n' > mt/project.godot
+          export AK_EXPECTED_ID=$(python3 tools/module-test/fnv.py)
+          echo expected $AK_EXPECTED_ID
+          ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
+          xvfb-run -a $ED --headless --path mt --script res://check.gd 2>&1 | tee check.log
+          grep -q "AK_MODULE_TEST PASS" check.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ak-module-test
+          path: |
+            check.log
+      - name: Publish result
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ak-module-test-run${{ github.run_number }} check.log --repo "$GITHUB_REPOSITORY" --title "AK Core module test run ${{ github.run_number }}" --notes "CI: the Godot editor was built with the AK Core C++ module compiled in and GDScript called it (asset ids, world rebase, frame stats). Built from $GITHUB_SHA." --prerelease
