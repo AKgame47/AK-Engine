@@ -47,7 +47,7 @@ jobs:
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
-          interface/theme/preset = "Custom"
+          interface/theme/color_preset = "Custom"
           interface/theme/base_color = Color(0.075, 0.075, 0.09, 1)
           interface/theme/accent_color = Color(0.976, 0.008, 0.141, 1)
           interface/theme/contrast = 0.35
