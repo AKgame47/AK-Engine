@@ -40,14 +40,19 @@ jobs:
           SCONS_CACHE: .scons_cache
           SCONS_CACHE_LIMIT: 6144
         run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
-      - name: Apply AK theme via editor settings
+      - name: Apply AK theme (AK red accent on near-black) via editor settings
         run: |
           mkdir -p $HOME/.config/godot
           cat > $HOME/.config/godot/editor_settings-4.7.tres <<EOT
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
-          interface/theme/custom_theme = "$GITHUB_WORKSPACE/branding/ak-editor-theme.tres"
+          interface/theme/preset = "Custom"
+          interface/theme/base_color = Color(0.075, 0.075, 0.09, 1)
+          interface/theme/accent_color = Color(0.976, 0.008, 0.141, 1)
+          interface/theme/contrast = 0.35
+          interface/theme/icon_and_font_color = 0
+          interface/theme/draw_extra_borders = true
           EOT
           sed -i 's/^          //' $HOME/.config/godot/editor_settings-4.7.tres
           cat $HOME/.config/godot/editor_settings-4.7.tres
@@ -76,4 +81,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ak-editor-run${{ github.run_number }} ak-engine-editor.linux.x86_64 ak-editor.png $(ls splash-*.png) editor.log --repo "$GITHUB_REPOSITORY" --title "AK Engine editor (Linux x86_64) run ${{ github.run_number }}" --notes "CI build from $GITHUB_SHA. AK name, red-and-white AK logo as splash and app icon, custom theme setting. Unsigned. Not a polished editor: layout is stock Godot." --prerelease
+          gh release create ak-editor-run${{ github.run_number }} ak-engine-editor.linux.x86_64 ak-editor.png $(ls splash-*.png) editor.log --repo "$GITHUB_REPOSITORY" --title "AK Engine editor (Linux x86_64) run ${{ github.run_number }}" --notes "CI build from $GITHUB_SHA. AK name, red-and-white AK logo as splash and app icon, AK red-on-black editor colour theme via built-in editor settings. Unsigned. Layout is still stock Godot." --prerelease
