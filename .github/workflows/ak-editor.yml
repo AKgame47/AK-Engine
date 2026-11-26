@@ -15,10 +15,13 @@ jobs:
       - name: AK name patch
         working-directory: godot
         run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
-      - name: AK splash and app icon
+      - name: AK splash and app icon (AK's own red-and-white logo)
         run: |
-          cp branding/ak-splash.png godot/main/splash.png
-          cp branding/ak-icon-256.png godot/main/app_icon.png
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          LOGO=branding/foundry/motion/AK-Engine-Logo.png
+          file $LOGO
+          convert $LOGO -resize 1200x900 godot/main/splash.png
+          convert $LOGO -gravity center -crop 1086x1086+0+0 +repage -resize 256x256 godot/main/app_icon.png
           file godot/main/splash.png godot/main/app_icon.png
       - name: Dependencies
         run: |
@@ -73,4 +76,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ak-editor-run${{ github.run_number }} ak-engine-editor.linux.x86_64 ak-editor.png $(ls splash-*.png) editor.log --repo "$GITHUB_REPOSITORY" --title "AK Engine editor (Linux x86_64) run ${{ github.run_number }}" --notes "CI build from $GITHUB_SHA. AK name, splash, app icon, custom theme. Unsigned. Not a polished editor: layout is stock Godot." --prerelease
+          gh release create ak-editor-run${{ github.run_number }} ak-engine-editor.linux.x86_64 ak-editor.png $(ls splash-*.png) editor.log --repo "$GITHUB_REPOSITORY" --title "AK Engine editor (Linux x86_64) run ${{ github.run_number }}" --notes "CI build from $GITHUB_SHA. AK name, red-and-white AK logo as splash and app icon, custom theme setting. Unsigned. Not a polished editor: layout is stock Godot." --prerelease
