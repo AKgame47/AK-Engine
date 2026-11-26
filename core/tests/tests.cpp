@@ -18,6 +18,15 @@ int main() {
     CHECK(s.count() == 100);
     CHECK(std::fabs(s.avg_fps() - 100.0 / 1.04) < 1e-6);
     CHECK(std::fabs(s.low1_fps() - 20.0) < 1e-9);
+    // renderer switch: 2D -> Godot, 3D -> O3DE when available, else Godot with fallback flag
+    CHECK(ak::classify_game(0, 0) == ak::GameKind::Unknown);
+    CHECK(ak::classify_game(40, 3) == ak::GameKind::Game2D);
+    CHECK(ak::classify_game(2, 30) == ak::GameKind::Game3D);
+    CHECK(ak::select_renderer(ak::GameKind::Game2D, true).kind == ak::RendererKind::Godot);
+    CHECK(ak::select_renderer(ak::GameKind::Game3D, true).kind == ak::RendererKind::O3DE);
+    CHECK(ak::select_renderer(ak::GameKind::Game3D, false).kind == ak::RendererKind::Godot);
+    CHECK(ak::select_renderer(ak::GameKind::Game3D, false).fell_back);
+    CHECK(!ak::select_renderer(ak::GameKind::Game2D, false).fell_back);
     std::printf(fails ? "FAILED\n" : "ALL TESTS PASSED\n");
     return fails;
                   }
