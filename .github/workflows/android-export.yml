@@ -68,6 +68,8 @@ jobs:
           cat $HOME/.config/godot/editor_settings-4.7.tres
       - name: Add Android preset
         run: |
+          sed -i '/^\[rendering\]/a textures/vram_compression/import_etc2_astc=true' project/project.godot
+          cat project/project.godot
           TPL=$GITHUB_WORKSPACE/godot/bin/android_release.apk
           KS=$GITHUB_WORKSPACE/debug.keystore
           cat >> project/export_presets.cfg <<EOT
