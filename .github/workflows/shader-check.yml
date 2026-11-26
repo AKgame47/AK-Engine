@@ -1,0 +1,61 @@
+name: shader-check
+# Builds the editor (cached) and runs an external branch's shader preview under xvfb: import, startup, and one captured frame.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or ref to test
+        default: friday/branding-docs-samples-shaders-research
+permissions:
+  contents: write
+jobs:
+  shaders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-shader-${{ github.run_id }}
+          restore-keys: |
+            scons-export-
+            scons-linux-editor-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Shader preview check and capture
+        run: |
+          export GODOT=$GITHUB_WORKSPACE/godot/bin/godot.linuxbsd.editor.x86_64
+          chmod +x shaders/run-preview.sh
+          xvfb-run -a -s "-screen 0 1280x720x24" ./shaders/run-preview.sh --check 2>&1 | tee shader-check.log
+          xvfb-run -a -s "-screen 0 1280x720x24" ./shaders/run-preview.sh --capture $GITHUB_WORKSPACE/shore.png 2>&1 | tee -a shader-check.log || true
+          ls -la shore.png
+          grep -ciE 'SHADER ERROR|Parse Error|Failed' shader-check.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shader-check
+          path: |
+            shore.png
+            shader-check.log
+      - name: Publish capture
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create shader-check-run${{ github.run_number }} shore.png shader-check.log --repo "$GITHUB_REPOSITORY" --title "Shader check run ${{ github.run_number }}" --notes "CI capture of ${{ github.event.inputs.ref }} at $GITHUB_SHA. Software rendering (llvmpipe)." --prerelease || true
