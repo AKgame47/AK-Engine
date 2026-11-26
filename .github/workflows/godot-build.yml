@@ -6,6 +6,8 @@ on:
   push:
     paths:
       - '.github/workflows/godot-build.yml'
+permissions:
+  contents: write
 jobs:
   linux-editor:
     runs-on: ubuntu-latest
@@ -45,6 +47,16 @@ jobs:
           cd project
           xvfb-run -a -s "-screen 0 1280x720x24" ../godot/bin/godot.linuxbsd.editor.x86_64 --rendering-driver opengl3 --path . --script shot.gd 2>&1 | tee ../render.log
           ls -la ..
+      - name: Commit render evidence to repo
+        run: |
+          git config user.name "ak-engine-ci"
+          git config user.email "ci@users.noreply.github.com"
+          mkdir -p docs/evidence
+          cp shot.png docs/evidence/shot-run${{ github.run_number }}.png
+          cp render.log docs/evidence/render-run${{ github.run_number }}.log
+          git add docs/evidence
+          git commit -m "CI render evidence from run ${{ github.run_number }}"
+          git push
       - uses: actions/upload-artifact@v4
         if: always()
         with:
