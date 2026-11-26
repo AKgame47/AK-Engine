@@ -26,5 +26,13 @@ cp "$here"/preview/project.godot "$here"/preview/preview.tscn "$here"/preview/pr
 cp -R "$here/../assets/samples/preview/." "$work/"
 mkdir -p "$work/shaders"
 cp "$here"/water.gdshader "$here"/sky.gdshader "$here"/foliage.gdshader "$work/shaders/"
+export XDG_CACHE_HOME="$work/.xdg/cache"
+export XDG_CONFIG_HOME="$work/.xdg/config"
+export XDG_DATA_HOME="$work/.xdg/data"
+mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
 "${GODOT:-godot}" --headless --path "$work" --import
-"${GODOT:-godot}" --path "$work" -- "$@"
+if [ "$check" = true ]; then
+    "${GODOT:-godot}" --headless --path "$work" --quit-after 8
+else
+    "${GODOT:-godot}" --path "$work" -- "$@"
+fi
