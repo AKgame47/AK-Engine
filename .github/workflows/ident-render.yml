@@ -1,0 +1,56 @@
+name: ident-render
+# Runs the external AI's Blender ident (branding/foundry/motion) headless on a free runner: Blender 4.5 LTS (GPL, official build, used only as an isolated tool), numpy/scipy for sound, ffmpeg for packaging. Scripts were read before this workflow was written.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  ident:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg python3-numpy python3-scipy libxi6 libxrender1 libxkbcommon0 libsm6 libgl1 libxxf86vm1 libxfixes3 libegl1
+          curl -sSL -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.9-linux-x64.tar.xz
+          ls -la blender.tar.xz
+          tar xf blender.tar.xz
+          ./blender-4.5.9-linux-x64/blender --version | head -2
+      - name: Synthesize sound
+        working-directory: branding/foundry/motion
+        run: python3 sound_design.py
+      - name: Render frames with Blender (Cycles, CPU)
+        working-directory: branding/foundry/motion
+        run: |
+          time $GITHUB_WORKSPACE/blender-4.5.9-linux-x64/blender -b --python build_ident.py -- render 2>&1 | tail -40 | tee $GITHUB_WORKSPACE/blender.log
+          ls render | wc -l
+      - name: Package video
+        working-directory: branding/foundry/motion
+        run: |
+          sh ./assemble_ident.sh
+          ls -la AK-Engine-Forge-Ident.mp4
+      - name: QA
+        working-directory: branding/foundry/motion
+        run: python3 qa_ident.py 2>&1 | tee $GITHUB_WORKSPACE/qa.log
+      - name: Collect outputs
+        working-directory: branding/foundry/motion
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/out
+          cp AK-Engine-Forge-Ident.mp4 AK-Engine-Ident-Sound.wav $GITHUB_WORKSPACE/out/
+          for n in 0001 0020 0035 0044 0050 0073; do cp render/frame_$n.png $GITHUB_WORKSPACE/out/frame_$n.png || true; done
+          cp QA-*.png $GITHUB_WORKSPACE/out/ || true
+          cp $GITHUB_WORKSPACE/blender.log $GITHUB_WORKSPACE/qa.log $GITHUB_WORKSPACE/out/ || true
+          ls -la $GITHUB_WORKSPACE/out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ident-render
+          path: out
+      - name: Publish release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ident-render-run${{ github.run_number }} out/* --repo "$GITHUB_REPOSITORY" --title "Forge ident render run ${{ github.run_number }}" --notes "CI render of branding/foundry/motion at $GITHUB_SHA. Blender 4.5.9 Cycles CPU, 6 samples." --prerelease
