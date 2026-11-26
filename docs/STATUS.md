@@ -1,4 +1,4 @@
-# Status (updated 2026-11-27, 05:20 IST)
+# Status (updated 2026-11-27, 05:30 IST)
 
 Every "Implemented" row has a link to the CI run, release or file that shows it. Everything else is not done.
 
@@ -47,6 +47,9 @@ AK's instruction (26 Nov, 18:41 IST): work is continuous until the engine is don
 
 - 2026-11-27, AK: asset creation and animation happen inside the engine ("own Blender"), not through an external Blender bridge. glTF import stays as a complement for free third-party assets.
 - 2026-11-27, AK: use Blender source code directly for the in-engine modelling and animation tools. AK Engine is now GPL-3.0 (`LICENSE`). Godot MIT and O3DE Apache-2.0/MIT code stay under their own notices inside the combined work. Details and rules: `docs/LICENSE-AUDIT.md`. AK confirmed on 2026-11-27: Blender-derived code stays editor-only. Exported games ship the Godot MIT runtime plus AK runtime code, no GPL.
+- 2026-11-27, AK: design requirement. AK Engine switches renderer automatically per game: 2D games use the Godot renderer, 3D games use the O3DE (Atom) renderer. Architecture is a renderer-abstraction layer in AK Core with automatic 2D/3D detection. Status: abstraction logic implemented (`core/`, unit-tested natively); O3DE backend NOT integrated, so 3D currently falls back to Godot with fell_back=true. See `docs/RENDERER-EVAL.md`.
+- 2026-11-27, AK: Phase 2 acceptance milestone: a car and a character built with AK Engine's own tools, exportable (glTF), with real screenshots and files, no mockups. Starts after stages 2.1 and 2.2 land as interactive tools.
+- 2026-11-27, AK: standing rule, run independent work in parallel and report what runs in parallel.
 - Package id stays com.akstudio.akenginedemo for now.
 
 ## Phase 2 replaced: In-engine asset creation (modelling and animation)
@@ -58,3 +61,12 @@ AK's instruction (26 Nov, 18:41 IST): work is continuous until the engine is don
 | 2.2 | In-editor animation: AnimationPlayer, animation editor and skeleton tools already ship in the Godot base | Not verified headless | CI test that creates an Animation with tracks, plays it and checks the result |
 | 2.3 | Procedural tools (roads, buildings, terrain) | Not started | After 2.1 |
 | 2.4 | DCC-grade modelling (long term): port Blender BMesh-style editing, modifiers, sculpt, rigging | Not started. Blender source may now be used (GPL). | Audit which Blender modules are separable |
+
+## AK Core and renderer switch
+
+| Item | State |
+|---|---|
+| core/ C++ library: asset_id, rebase, classify_game, select_renderer | Implemented, native tests pass locally |
+| godot_module/ak_core (AKCore, AKFrameStats) | EXPERIMENTAL. Compile check in CI workflow ak-module-test; not yet passing |
+| O3DE backend | Planned, not integrated |
+| Automatic 2D/3D switch with real O3DE | Planned. Switch point exists; only the Godot path is live |
