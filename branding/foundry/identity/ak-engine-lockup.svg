@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="362" height="80" viewBox="0 0 362 80" role="img" aria-label="AK Engine">
+  <path fill="#EDE9E1" fill-rule="evenodd" d="M3 70L36 10H51L80 70H62L55 55H31L23 70ZM38 42H49L44 30Z"/>
+  <path fill="#EDE9E1" d="M83 10H99V39H109L146 70H124L102 51L99 54V70H83Z"/>
+  <path fill="#D9A16C" d="M104 34L127 10H147L124 34Z"/>
+  <g fill="none" stroke="#EDE9E1" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="square" transform="translate(172 27)">
+    <path d="M19 0H0V26H19 M0 13H15 M32 26V0L52 26V0 M86 0H70L65 5V21L70 26H86V14H78 M100 0H111 M105.5 0V26 M100 26H111 M125 26V0L145 26V0 M180 0H158V26H180 M158 13H176"/>
+  </g>
+</svg>
