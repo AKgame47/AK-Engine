@@ -28,7 +28,7 @@ jobs:
         env:
           SCONS_CACHE: .scons_cache
           SCONS_CACHE_LIMIT: 4096
-        run: scons platform=linuxbsd target=editor debug_symbols=no -j$(nproc)
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
       - name: Smoke test headless
         working-directory: godot
         run: |
