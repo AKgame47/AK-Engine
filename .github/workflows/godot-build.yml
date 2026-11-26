@@ -24,7 +24,7 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb mesa-utils libgl1-mesa-dri
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb x11-apps imagemagick mesa-utils libgl1-mesa-dri
       - uses: actions/cache@v4
         with:
           path: godot/.scons_cache
@@ -47,6 +47,16 @@ jobs:
           cd project
           xvfb-run -a -s "-screen 0 1280x720x24" ../godot/bin/godot.linuxbsd.editor.x86_64 --rendering-driver opengl3 --path . --script shot.gd 2>&1 | tee ../render.log
           ls -la ..
+      - name: Launch real editor UI and capture a screenshot
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1600x900x24 &
+          sleep 3
+          ./godot/bin/godot.linuxbsd.editor.x86_64 --rendering-driver opengl3 --editor --path project --resolution 1600x900 > editor.log 2>&1 &
+          sleep 60
+          import -window root editor.png || true
+          ls -la editor.png
+          pkill -f godot.linuxbsd || true
       - name: Commit render evidence to repo
         run: |
           git config user.name "ak-engine-ci"
@@ -54,6 +64,8 @@ jobs:
           mkdir -p docs/evidence
           cp shot.png docs/evidence/shot-run${{ github.run_number }}.png
           cp render.log docs/evidence/render-run${{ github.run_number }}.log
+          cp editor.png docs/evidence/editor-run${{ github.run_number }}.png || true
+          cp editor.log docs/evidence/editor-run${{ github.run_number }}.log || true
           git add docs/evidence
           git commit -m "CI render evidence from run ${{ github.run_number }}"
           git push
@@ -65,3 +77,4 @@ jobs:
             godot/bin/godot.linuxbsd.editor.x86_64
             render.log
             shot.png
+            editor.png
