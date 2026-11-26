@@ -1,0 +1,108 @@
+name: web-export
+# Builds the Godot 4.7.2 web release template (emscripten 4.0.11, no threads), exports the demo to a browser build, and publishes it zipped. Not tested in a real browser by this workflow.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 4.0.11
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-web-${{ github.run_id }}
+          restore-keys: |
+            scons-web-
+            scons-export-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Build web release template (no threads)
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: |
+          scons platform=web target=template_release threads=no debug_symbols=no module_raycast_enabled=no -j$(nproc) 2>&1 | tail -30
+          ls -la bin
+      - name: Export web build
+        run: |
+          TPL=$(ls $GITHUB_WORKSPACE/godot/bin/godot.web.template_release.wasm32.nothreads.zip)
+          mkdir -p $HOME/.config/godot build/web
+          sed -i '/^\[rendering\]/a textures/vram_compression/import_etc2_astc=true' project/project.godot
+          cat >> project/export_presets.cfg <<EOT
+
+          [preset.1]
+
+          name="Web"
+          platform="Web"
+          runnable=true
+          advanced_options=false
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path=""
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.1.options]
+
+          custom_template/debug=""
+          custom_template/release="$TPL"
+          variant/extensions_support=false
+          variant/thread_support=false
+          vram_texture_compression/for_desktop=true
+          vram_texture_compression/for_mobile=false
+          html/export_icon=true
+          html/custom_html_shell=""
+          html/head_include=""
+          html/canvas_resize_policy=2
+          html/focus_canvas_on_start=true
+          html/experimental_virtual_keyboard=false
+          progressive_web_app/enabled=false
+          EOT
+          sed -i 's/^          //' project/export_presets.cfg
+          xvfb-run -a ./godot/bin/godot.linuxbsd.editor.x86_64 --headless --path project --export-release Web ../build/web/index.html 2>&1 | tee export-web.log
+          ls -la build/web
+      - name: Zip and verify
+        run: |
+          cd build/web && zip -r ../ak-demo-web.zip . && cd ../..
+          ls -la build/ak-demo-web.zip | tee verify-web.log
+          unzip -l build/ak-demo-web.zip | tee -a verify-web.log
+          grep -c 'AK Engine' build/web/index.html || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ak-demo-web
+          path: |
+            build/ak-demo-web.zip
+            export-web.log
+            verify-web.log
+      - name: Publish release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create web-demo-run${{ github.run_number }} build/ak-demo-web.zip export-web.log verify-web.log --repo "$GITHUB_REPOSITORY" --title "AK Engine demo (Web) run ${{ github.run_number }}" --notes "CI build from $GITHUB_SHA. Single-thread web build; needs serving over http (not file://). Not tested in a browser yet." --prerelease
