@@ -59,3 +59,11 @@ jobs:
             build/ak-demo.x86_64
             export.log
             run-export.log
+      - name: Publish release asset
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=demo-linux-run${{ github.run_number }}
+          cp build/ak-demo.x86_64 ak-demo-linux-x86_64
+          gh release create "$TAG" ak-demo-linux-x86_64 export.log run-export.log --repo "$GITHUB_REPOSITORY" --title "AK Engine demo (Linux x86_64) run ${{ github.run_number }}" --notes "Built by CI from commit $GITHUB_SHA. Unsigned, untested beyond a headless smoke run." --prerelease
