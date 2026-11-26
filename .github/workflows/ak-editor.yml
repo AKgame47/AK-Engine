@@ -1,0 +1,76 @@
+name: ak-editor-branded
+# Builds the AK-branded editor: AK name patch, AK boot splash and app icon from branding/, AK custom theme applied through editor settings. Captures splash and editor screenshots and publishes the editor binary as ak-engine-editor.linux.x86_64.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: AK splash and app icon
+        run: |
+          cp branding/ak-splash.png godot/main/splash.png
+          cp branding/ak-icon-256.png godot/main/app_icon.png
+          file godot/main/splash.png godot/main/app_icon.png
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri imagemagick
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-akeditor-${{ github.run_id }}
+          restore-keys: |
+            scons-akeditor-
+            scons-export-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Apply AK theme via editor settings
+        run: |
+          mkdir -p $HOME/.config/godot
+          cat > $HOME/.config/godot/editor_settings-4.7.tres <<EOT
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          interface/theme/custom_theme = "$GITHUB_WORKSPACE/branding/ak-editor-theme.tres"
+          EOT
+          sed -i 's/^          //' $HOME/.config/godot/editor_settings-4.7.tres
+          cat $HOME/.config/godot/editor_settings-4.7.tres
+      - name: Launch editor, capture splash and editor window
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1600x900x24 &
+          sleep 3
+          cp godot/bin/godot.linuxbsd.editor.x86_64 ak-engine-editor.linux.x86_64
+          ./ak-engine-editor.linux.x86_64 --rendering-driver opengl3 --editor --path project --resolution 1600x900 > editor.log 2>&1 &
+          for i in 1 2 3 4 5 6; do sleep 1; import -window root splash-$i.png || true; done
+          sleep 60
+          import -window root ak-editor.png
+          ls -la *.png
+          pkill -f ak-engine-editor || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ak-editor
+          path: |
+            ak-editor.png
+            splash-*.png
+            editor.log
+      - name: Publish release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ak-editor-run${{ github.run_number }} ak-engine-editor.linux.x86_64 ak-editor.png $(ls splash-*.png) editor.log --repo "$GITHUB_REPOSITORY" --title "AK Engine editor (Linux x86_64) run ${{ github.run_number }}" --notes "CI build from $GITHUB_SHA. AK name, splash, app icon, custom theme. Unsigned. Not a polished editor: layout is stock Godot." --prerelease
