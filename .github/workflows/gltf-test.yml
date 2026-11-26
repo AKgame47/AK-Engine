@@ -1,0 +1,58 @@
+name: gltf-import-test
+# Builds the AK editor, imports the sample glTF models headlessly and checks the imported meshes (count and vertices). Fails the job if the import or the check fails.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri imagemagick
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-akeditor-${{ github.run_id }}
+          restore-keys: |
+            scons-akeditor-
+            scons-export-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Import sample glTF and check meshes
+        run: |
+          mkdir -p gt/models
+          cp assets/samples/preview/models/* gt/models/
+          cp tools/gltf-test/check.gd gt/check.gd
+          printf 'config_version=5\n\n[application]\nconfig/name="gltf-test"\n\n[rendering]\nrenderer/rendering_method="gl_compatibility"\n' > gt/project.godot
+          ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
+          xvfb-run -a $ED --headless --path gt --import 2>&1 | tee import.log
+          ls -la gt/.godot/imported | head
+          xvfb-run -a $ED --headless --path gt --script res://check.gd 2>&1 | tee check.log
+          grep -q "GLTF_TEST PASS" check.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gltf-test
+          path: |
+            import.log
+            check.log
+      - name: Publish result
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create gltf-test-run${{ github.run_number }} import.log check.log --repo "$GITHUB_REPOSITORY" --title "glTF import test run ${{ github.run_number }}" --notes "CI: the AK-named Godot editor imported the sample glTF props headlessly and the check script counted meshes and vertices. Built from $GITHUB_SHA." --prerelease
