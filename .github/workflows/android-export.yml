@@ -66,6 +66,18 @@ jobs:
           EOT
           sed -i 's/^          //' $HOME/.config/godot/editor_settings-4.7.tres
           cat $HOME/.config/godot/editor_settings-4.7.tres
+      - name: AK branding (name, icon, boot splash)
+        run: |
+          sudo apt-get install -y imagemagick
+          LOGO=branding/foundry/motion/AK-Engine-Logo.png
+          convert $LOGO -gravity center -crop 1086x1086+0+0 +repage -resize 192x192 project/ak-icon-192.png
+          convert $LOGO -gravity center -crop 1086x1086+0+0 +repage -resize 288x288 -background none -gravity center -extent 432x432 project/ak-icon-fg-432.png
+          convert -size 432x432 xc:black project/ak-icon-bg-432.png
+          convert $LOGO -resize 1200x900 project/ak-splash.png
+          cp project/ak-icon-192.png project/icon.png
+          sed -i 's|^config/name=.*|config/name="AK Engine"|' project/project.godot
+          sed -i '/^config\/features/a config/icon="res://icon.png"\nboot_splash/bg_color=Color(0, 0, 0, 1)\nboot_splash/image="res://ak-splash.png"\nboot_splash/fullsize=true\nboot_splash/use_filter=true' project/project.godot
+          cat project/project.godot
       - name: Add Android preset
         run: |
           sed -i '/^\[rendering\]/a textures/vram_compression/import_etc2_astc=true' project/project.godot
@@ -109,7 +121,10 @@ jobs:
           version/code=1
           version/name="0.1"
           package/unique_name="com.akstudio.akenginedemo"
-          package/name="AK Engine Demo"
+          package/name="AK Engine"
+          launcher_icons/main_192x192="res://ak-icon-192.png"
+          launcher_icons/adaptive_foreground_432x432="res://ak-icon-fg-432.png"
+          launcher_icons/adaptive_background_432x432="res://ak-icon-bg-432.png"
           package/signed=true
           screen/immersive_mode=true
           EOT
@@ -125,7 +140,12 @@ jobs:
           $BT/aapt2 dump badging build/ak-demo-arm64.apk | grep -E "package:|application-label|native-code|sdkVersion|targetSdk" | tee verify-apk.log
           $BT/apksigner verify --verbose build/ak-demo-arm64.apk 2>&1 | head -8 | tee -a verify-apk.log
           unzip -l build/ak-demo-arm64.apk | grep -E "\.so|\.pck|assets" | head -10 | tee -a verify-apk.log
-          ls -la build/ak-demo-arm64.apk
+          mkdir -p apkx && cd apkx && unzip -oq ../build/ak-demo-arm64.apk && cd ..
+          $BT/aapt2 dump badging build/ak-demo-arm64.apk | grep -E "application-icon|icon=" | tee -a verify-apk.log
+          $BT/aapt2 dump resources build/ak-demo-arm64.apk | grep -iE "mipmap|icon" | head -20 | tee -a verify-apk.log
+          grep -ciE "godot" export-android.log | tee -a verify-apk.log || true
+          cp "$(find apkx/res -iname '*icon*' -o -iname '*mipmap*' | grep -E 'png$' | head -1)" launcher-icon.png || true
+          ls -la build/ak-demo-arm64.apk launcher-icon.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -135,9 +155,10 @@ jobs:
             export-android.log
             verify-apk.log
             template-build.log
+            launcher-icon.png
       - name: Publish APK release
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create android-demo-run${{ github.run_number }} build/ak-demo-arm64.apk export-android.log verify-apk.log --repo "$GITHUB_REPOSITORY" --title "AK Engine demo (Android arm64) run ${{ github.run_number }}" --notes "Built by CI from $GITHUB_SHA. Debug-signed, not tested on a device. Install requires allowing unknown sources." --prerelease
+          gh release create android-demo-run${{ github.run_number }} build/ak-demo-arm64.apk export-android.log verify-apk.log project/ak-splash.png $(ls launcher-icon.png 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "AK Engine (Android arm64) run ${{ github.run_number }}" --notes "Built by CI from $GITHUB_SHA. Debug-signed. App name AK Engine, AK logo icon and boot splash. Install requires allowing unknown sources." --prerelease
