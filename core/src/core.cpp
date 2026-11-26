@@ -9,6 +9,17 @@ bool needs_rebase(const WorldPos& c, const WorldPos& o, double limit) {
     double dx = c.x - o.x, dy = c.y - o.y, dz = c.z - o.z;
     return dx * dx + dy * dy + dz * dz > limit * limit;
 }
+GameKind classify_game(int n2, int n3) {
+    if (n2 <= 0 && n3 <= 0) return GameKind::Unknown;
+    return n3 > n2 ? GameKind::Game3D : GameKind::Game2D;
+}
+RendererChoice select_renderer(GameKind k, bool o3de_available) {
+    if (k == GameKind::Game3D) {
+        if (o3de_available) return {RendererKind::O3DE, false};
+        return {RendererKind::Godot, true};
+    }
+    return {RendererKind::Godot, false};
+}
 void FrameStats::add(double s) { t_.push_back(s); }
 double FrameStats::avg_fps() const {
     if (t_.empty()) return 0;
