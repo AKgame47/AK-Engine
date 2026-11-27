@@ -29,8 +29,8 @@ jobs:
           echo "CMAKE_MIN"; grep -m1 -i cmake_minimum_required CMakeLists.txt
           echo "RUNNER_DISK_FREE_GB $(df -BG --output=avail / | tail -1 | tr -dc 0-9)"
           echo "RUNNER_CPUS $(nproc) MEM_GB $(free -g | awk '/Mem/{print $2}')"
-          } 2>&1 | tee ../probe.log
-          if ! grep -q '^FILES [1-9]' ../probe.log; then exit 1; fi
+          } 2>&1 | tee "$GITHUB_WORKSPACE/probe.log"
+          if ! grep -q "^FILES [1-9]" "$GITHUB_WORKSPACE/probe.log"; then exit 1; fi
       - name: Publish result
         env:
           GH_TOKEN: ${{ github.token }}
