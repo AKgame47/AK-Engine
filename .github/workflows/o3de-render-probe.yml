@@ -97,8 +97,10 @@ jobs:
           Xvfb :99 -screen 0 1920x1080x24 &
           sleep 3
           export DISPLAY=:99
+          echo '---- level products'; find $E/AutomatedTesting/Cache -iname '*hermanubis*' 2>/dev/null | head -20; find $E/AutomatedTesting/Cache -iname '*.spawnable' 2>/dev/null | grep -i level | head -20; ls $E/AutomatedTesting/user/log 2>&1 | head
           N=0
           for LV in hermanubis Graphics/hermanubis hermanubis/hermanubis Levels/Graphics/hermanubis/hermanubis; do
+            echo "LoadLevel $LV" > $E/AutomatedTesting/autoexec.cfg
             N=$((N+1))
             timeout 200 gdb -batch -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 40' --args ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 +LoadLevel $LV > $GITHUB_WORKSPACE/launcher_$N.log 2>&1 &
             LP=$!
@@ -106,6 +108,7 @@ jobs:
             echo "attempt $N level $LV alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
             import -window root $GITHUB_WORKSPACE/o3de_shot_$N.png; echo "shot $N bytes $(stat -c %s $GITHUB_WORKSPACE/o3de_shot_$N.png)"
             pkill -f AutomatedTesting.GameLauncher; sleep 5
+            cp $E/AutomatedTesting/user/log/Game.log $GITHUB_WORKSPACE/game_$N.log 2>/dev/null
           done
           cp $GITHUB_WORKSPACE/o3de_shot_4.png $GITHUB_WORKSPACE/o3de_shot.png
           cp $GITHUB_WORKSPACE/launcher_1.log $GITHUB_WORKSPACE/launcher.log
@@ -119,4 +122,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           test -s configure.log
-          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png o3de_shot_1.png o3de_shot_2.png o3de_shot_3.png o3de_shot_4.png ap.log launcher.log launcher_2.log launcher_3.log launcher_4.log mon.log patch.log) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
+          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png o3de_shot_1.png o3de_shot_2.png o3de_shot_3.png o3de_shot_4.png ap.log game_1.log game_2.log game_3.log game_4.log launcher.log launcher_2.log launcher_3.log launcher_4.log mon.log patch.log) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
