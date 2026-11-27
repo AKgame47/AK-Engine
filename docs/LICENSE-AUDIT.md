@@ -26,3 +26,14 @@ Rules that follow:
 3. Do not take Qt (LGPL-3.0, separate terms) from O3DE.
 4. Exported games (AK's decision, confirmed 2026-11-27): Blender-derived code stays EDITOR-ONLY. Exported games ship only the Godot MIT runtime plus AK runtime code, with no GPL code. Never put Blender-derived code in runtime modules or export templates.
 5. The MIT statement in earlier sections of this file is superseded for new code by the GPL-3.0 decision above.
+
+## Status update, 2026-11-28 (M2): what AK Engine actually contains from each upstream
+
+| Item | Fact | Licence effect |
+|---|---|---|
+| `project/addons/ak_modeler` (AKMeshOps) | Written for AK Engine. No code was copied from Blender or O3DE. Ops: subdivide, select, extrude, cutout, mirror_x, weld, cut_plane. | AK code under the repository's GPL-3.0. Not Blender-derived, so it needs no upstream header. If a Blender algorithm is ported later, add its SPDX header and an entry in `THIRD_PARTY_NOTICES.md`, and keep it editor-only. |
+| O3DE in CI (`o3de-render-probe` and related workflows) | O3DE 2610.0 is fetched and built on the CI runner only. No O3DE source is committed to this repository. A CI-only patch to Atom's Vulkan allocator is applied to the CI checkout and is not stored here. | No O3DE code is redistributed by this repository yet. Apache-2.0 or MIT terms apply when code is ported. Qt is not used. |
+| CC0 car (tevy.dev Mid-Engine Supercar v2) | Imported as an experiment. Authorship is unverified, only the publisher's CC0 claim exists (see `THIRD_PARTY_ASSETS.md`). | EXPERIMENTAL. Do not ship in a release until authorship is verified. |
+| Godot 4.7.2 | Used as the runtime and built in CI. | MIT. Keep `COPYRIGHT.txt` and notices in any release. |
+
+Still open: the dependency trees of O3DE (3p packages) and Blender (lib repo), and `THIRD_PARTY_NOTICES.md`. Qt (LGPL-3.0) stays out.
