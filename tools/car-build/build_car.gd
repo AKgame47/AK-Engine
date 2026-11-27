@@ -173,6 +173,19 @@ func _initialize() -> void:
 					f = f * f * (3.0 - 2.0 * f)
 					x = signf(x) * maxf(absf(x) - 0.20 * f, 0.55)
 			row.append(Vector3(x, y, z))
+		if yt > belt + 0.1:
+			for side in [1.0, -1.0]:
+				var bj: int = -1
+				var bd: float = 9.0
+				for j in NM:
+					var pv: Vector3 = row[j]
+					if signf(pv.x) == side and pv.y > yc and absf(pv.y - belt) < bd:
+						bd = absf(pv.y - belt)
+						bj = j
+				if bj >= 0 and bd < 0.09:
+					var pb: Vector3 = row[bj]
+					row[bj] = Vector3(pb.x, belt, pb.z)
+			pass
 		grid.append(row)
 		cen.append(Vector3(0, yc, z))
 	var bmap := {}
@@ -184,7 +197,8 @@ func _initialize() -> void:
 			var cp: Vector3 = (q[0] + q[1] + q[2] + q[3]) * 0.25
 			var yt2 := _interp(top_keys, cp.z)
 			var is_glass := false
-			if cp.y > belt + 0.03:
+			var miny: float = minf(minf(q[0].y, q[1].y), minf(q[2].y, q[3].y))
+			if miny >= belt - 0.001 and cp.y > belt + 0.01:
 				var ax := absf(cp.x)
 				if cp.z > 0.35 and cp.z < 1.03 and ax < 0.62:
 					is_glass = true
