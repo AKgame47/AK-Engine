@@ -43,7 +43,7 @@ Everything else (physics, audio, input, scripting, UI) is out of scope until 1 t
 | # | Milestone | Status |
 |---|---|---|
 | M0 | Pin release, licence read, architecture notes, this plan | DONE (docs only) |
-| M1 | O3DE source fetched in CI at tag 2610.0, size and file counts logged | PLANNED |
+| M1 | O3DE source fetched in CI at tag 2610.0, size and file counts logged | DONE. Commit b612281, 30,973 files, 2,790 MB checked out (depth 1), 16,219 C/C++ files, 4,747 under Gems/Atom. Runner: 4 CPUs, 15 GB RAM, 83 GB free disk. Evidence: https://github.com/AKgame47/AK-Engine/releases/tag/o3de-probe-run2 |
 | M2 | Dependency/third-party licence audit | PLANNED |
 | M3 | O3DE core libs (AzCore) build in CI, time and disk logged | PLANNED |
 | M4 | O3DE editor or launcher builds, or documented blocker | PLANNED |
