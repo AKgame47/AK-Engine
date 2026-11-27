@@ -232,12 +232,12 @@ func _initialize() -> void:
 
 	var car := Node3D.new()
 	car.name = "AKCar"
-	car.add_child(_mesh_node("Body", body, true, _mat(Color(0.7, 0.03, 0.05), 0.25, 0.3)))
+	car.add_child(_mesh_node("Body", body, true, _mat(Color(0.7, 0.03, 0.05), 0.0, 0.35)))
 	car.add_child(_mesh_node("Glass", glass, true, _mat(Color(0.05, 0.08, 0.11), 0.2, 0.05)))
 	car.add_child(_mesh_node("Trim", trim, false, _mat(Color(0.04, 0.04, 0.045), 0.0, 0.6)))
 	car.add_child(_mesh_node("Headlights", headl, true, _mat(Color(0.9, 0.8, 0.5), 0.0, 0.3, true)))
 	car.add_child(_mesh_node("Taillights", taill, true, _mat(Color(0.9, 0.05, 0.05), 0.0, 0.3, true)))
-	car.add_child(_mesh_node("Mirrors", mirrors, true, _mat(Color(0.7, 0.03, 0.05), 0.25, 0.3)))
+	car.add_child(_mesh_node("Mirrors", mirrors, true, _mat(Color(0.7, 0.03, 0.05), 0.0, 0.35)))
 	car.add_child(_mesh_node("Tyres", tyre, true, _mat(Color(0.025, 0.025, 0.028), 0.0, 0.9)))
 	car.add_child(_mesh_node("Rims", rim, false, _mat(Color(0.78, 0.78, 0.82), 0.9, 0.25)))
 	car.add_child(_mesh_node("Brakes", brake, false, _mat(Color(0.35, 0.35, 0.38), 0.7, 0.4)))
