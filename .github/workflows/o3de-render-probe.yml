@@ -107,18 +107,12 @@ jobs:
           LVS="$LVS metadatatest/metadatatest"
           echo "candidates: $LVS"
           rm -f $E/AutomatedTesting/autoexec.cfg
-          for LV in hermanubis sponza; do
+          for LV in Levels/Graphics/hermanubis/hermanubis.spawnable Levels/Graphics/sponza/sponza.spawnable Levels/Graphics/hermanubis/hermanubis.spawnable; do
             N=$((N+1))
-            timeout 260 gdb -batch -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 40' --args ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 > $GITHUB_WORKSPACE/launcher_$N.log 2>&1 &
+            timeout 200 gdb -batch -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 40' --args ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 +LoadLevel $LV > $GITHUB_WORKSPACE/launcher_$N.log 2>&1 &
             LP=$!
-            sleep 70
+            sleep 110
             echo "attempt $N level $LV alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
-            xdotool search --class AutomatedTesting 2>&1 | head -3
-            xdotool mousemove 960 540 click 1; sleep 1
-            xdotool key grave; sleep 2
-            import -window root $GITHUB_WORKSPACE/o3de_console_$N.png
-            xdotool type --delay 80 "LoadLevel $LV"; sleep 1; xdotool key Return
-            sleep 75
             import -window root $GITHUB_WORKSPACE/o3de_shot_$N.png; echo "shot $N bytes $(stat -c %s $GITHUB_WORKSPACE/o3de_shot_$N.png)"
             pkill -f AutomatedTesting.GameLauncher; sleep 5
             cp $E/AutomatedTesting/user/log/Game.log $GITHUB_WORKSPACE/game_$N.log 2>/dev/null
@@ -126,7 +120,7 @@ jobs:
           cp $GITHUB_WORKSPACE/o3de_shot_$N.png $GITHUB_WORKSPACE/o3de_shot.png
           cp $GITHUB_WORKSPACE/launcher_1.log $GITHUB_WORKSPACE/launcher.log
           sleep 20
-          for n in 1 2; do echo "== game_$n"; grep -iE 'LevelSystem|level|spawnable' $GITHUB_WORKSPACE/game_$n.log 2>/dev/null | head -12 | cut -c1-250; done
+          for n in 1 2 3; do echo "== game_$n"; grep -iE 'LevelSystem|level|spawnable' $GITHUB_WORKSPACE/game_$n.log 2>/dev/null | head -12 | cut -c1-250; done
           } > $GITHUB_WORKSPACE/run.log 2>&1
           cat $GITHUB_WORKSPACE/run.log
       - name: Publish result
