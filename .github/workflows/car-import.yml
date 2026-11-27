@@ -42,7 +42,10 @@ jobs:
           sha256sum ci/supercar_lod1.glb | tee import.log
           # The file uses EXT_meshopt_compression, which the engine glTF importer does not read: decode it first with the open-source glTF-Transform tool.
           npx --yes @gltf-transform/cli@4 copy ci/supercar_lod1.glb ci/supercar_dec.glb 2>&1 | tee -a import.log
-          mv ci/supercar_dec.glb ci/supercar_lod1.glb
+          # KHR_mesh_quantization is also not read by the importer: dequantize, then drop KTX2 textures (material colours stay).
+          npx --yes @gltf-transform/cli@4 dequantize ci/supercar_dec.glb ci/supercar_dq.glb 2>&1 | tee -a import.log
+          mkdir -p tools/car-import/node && cd tools/car-import/node && npm init -y >/dev/null && npm i @gltf-transform/core@4 @gltf-transform/extensions@4 >/dev/null 2>&1 && cp ../strip.mjs . && cd ../../..
+          node tools/car-import/node/strip.mjs ci/supercar_dq.glb ci/supercar_lod1.glb 2>&1 | tee -a import.log
           ls -la ci/supercar_lod1.glb
           printf 'config_version=5\n\n[application]\nconfig/name="car-import"\n\n[display]\nwindow/size/viewport_width=960\nwindow/size/viewport_height=540\n\n[rendering]\nrenderer/rendering_method="gl_compatibility"\n' > ci/project.godot
           ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
