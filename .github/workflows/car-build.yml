@@ -40,8 +40,8 @@ jobs:
           ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --headless --path cb --import 2>&1 | tail -3
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --path cb --script res://build_car.gd 2>&1 | tee car.log
-          cp cb/ak_car.glb cb/car.png . || true
-          ls -la ak_car.glb car.png
+          cp cb/ak_car.glb cb/car.png cb/car_side.png cb/car_rear.png . || true
+          ls -la ak_car.glb car.png car_side.png car_rear.png
           ! grep -q "CHECK .* FAIL" car.log
           grep -q "CAR_BUILD DONE" car.log
       - uses: actions/upload-artifact@v4
@@ -52,9 +52,11 @@ jobs:
             car.log
             ak_car.glb
             car.png
+            car_side.png
+            car_rear.png
       - name: Publish result
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create car-build-run${{ github.run_number }} car.log ak_car.glb car.png --repo "$GITHUB_REPOSITORY" --title "Car build run ${{ github.run_number }}" --notes "CI: a low-poly car built with engine mesh APIs (SurfaceTool), exported to glTF, re-imported and rendered. Stylized, not hyperreal. Built from $GITHUB_SHA." --prerelease
+          gh release create car-build-run${{ github.run_number }} car.log ak_car.glb car.png car_side.png car_rear.png --repo "$GITHUB_REPOSITORY" --title "Car build run ${{ github.run_number }}" --notes "CI: a low-poly car built with engine mesh APIs (SurfaceTool), exported to glTF, re-imported and rendered. Stylized, not hyperreal. Built from $GITHUB_SHA." --prerelease
