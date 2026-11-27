@@ -1,0 +1,41 @@
+name: o3de-configure
+# M3 probe of docs/O3DE-INTEGRATION.md: try the O3DE CMake configure on a free runner and log what happens (time, errors). No full build.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Fetch pinned O3DE
+        run: git clone --depth 1 --branch 2610.0 https://github.com/o3de/o3de.git o3de
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang libglu1-mesa-dev libxcb-xinerama0 libxcb-xinput0 libxcb-xinput-dev libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libcurl4-openssl-dev libnvidia-egl-wayland1 libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-randr0-dev zlib1g-dev libpcre2-16-0
+          cmake --version
+      - name: Configure (log only)
+        continue-on-error: true
+        run: |
+          START=$(date +%s)
+          set +e
+          cmake -S o3de -B build -G Ninja -DCMAKE_BUILD_TYPE=profile -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLY_DISABLE_TEST_MODULES=ON > configure.full.log 2>&1
+          RC=$?
+          END=$(date +%s)
+          {
+          echo "O3DE_CONFIGURE_EXIT $RC"
+          echo "SECONDS $((END-START))"
+          echo "DISK_FREE_GB $(df -BG --output=avail / | tail -1 | tr -dc 0-9)"
+          echo "BUILD_DIR_MB $(du -sm build 2>/dev/null | cut -f1)"
+          echo "---- last 60 lines"
+          tail -60 configure.full.log
+          } > configure.log
+          cat configure.log
+      - name: Publish result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -s configure.log
+          gh release create o3de-configure-run${{ github.run_number }} configure.log --repo "$GITHUB_REPOSITORY" --title "O3DE configure probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 CMake configure attempt on a free runner. Log only, exit code inside. No build. Commit $GITHUB_SHA." --prerelease
