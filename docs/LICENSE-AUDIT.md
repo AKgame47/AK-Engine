@@ -45,3 +45,12 @@ Source: `cmake/3rdParty/Platform/Linux/BuiltInPackages_linux_x86_64.cmake` at ta
 Packages: RapidJSON 1.1.0, RapidXML 1.13, pybind11 2.10.0, glad 2.0.0-beta, xxhash 0.7.4, cityhash 1.1, expat 2.4.2, AWS Native SDK 1.11.288, tiff 4.2.0.15, freetype 2.11.1, Lua 5.4.4, mcpp 2.7.2_az.2, mikkelsen 1.0.0.4, googlebenchmark 1.7.0, qt 6.10.2, png 1.6.37, libsamplerate 0.2.1, openimageio-opencolorio 2.3.17, OpenEXR 3.1.3, OpenSSL 1.1.1t, DirectXShaderCompiler (Dxc) 1.8.2505.1, SPIRV-Cross 1.3.275.0, zlib 1.2.11, squish-ccr (deb557d), astc-encoder 3.2, ISPCTexComp (36b80aa), lz4 1.9.4, pyside6 6.10.2, SQLite 3.37.2, AWS IoT Device SDK C++ 1.15.2, Vulkan validation layers 1.2.198.
 
 Rule that follows for AK Engine: take nothing from this list into a release without checking that package's own licence file first. Qt and PySide6 stay out (editor UI toolkit, separate terms). Blender `lib` repo tree: still not audited.
+
+## Blender v5.3.0 in-tree licence scope, 2026-11-28
+
+Verified from the tag `v5.3.0` of https://github.com/blender/blender :
+- `doc/license/SPDX-license-identifiers.txt` lists the SPDX identifiers used in the source: Apache-2.0, BSD-2-Clause, BSD-3-Clause, BSL-1.0, GPL-2.0-or-later, GPL-3.0-or-later, LGPL-2.1-or-later, MIT, MPL-2.0, Zlib.
+- `extern/` holds these bundled libraries (each has its own licence, not yet checked one by one): audaspace, binreloc, bullet2, cuew, curve_fit_nd, fast_float, gflags, glew-es, glog, gmock, gtest, hipew, json, mantaflow, md4c, nanosvg, quadriflow, rangetree, renderdoc, tinygltf, toml11, tracy_profiler, ufbx, volk, vulkan_memory_allocator, wcwidth, wintab, xdnd, xxhash.
+- The separate `lib` repo (prebuilt libraries such as OpenSubdiv, OpenVDB, Embree) is NOT read yet.
+
+Rule that follows: read the SPDX header of every Blender file before copying it (only `editmesh_extrude.cc` has been checked so far: GPL-2.0-or-later). GPL-2.0-or-later and GPL-3.0-or-later files can go into the GPL-3.0 AK Engine editor; a GPL-2.0-only file cannot. Anything under `extern/` or from `lib` needs its own licence read first, and a file with LGPL, MPL or another header keeps that header. Editor-only still applies.
