@@ -127,7 +127,7 @@ func _mat(col: Color, metal := 0.0, rough := 0.5, emit := false) -> StandardMate
 	if emit:
 		m.emission_enabled = true
 		m.emission = col
-		m.emission_energy_multiplier = 1.5
+		m.emission_energy_multiplier = 0.5
 	return m
 
 func _mesh_node(name: String, mb: MB, smooth: bool, mat: Material) -> MeshInstance3D:
@@ -232,12 +232,12 @@ func _initialize() -> void:
 
 	var car := Node3D.new()
 	car.name = "AKCar"
-	car.add_child(_mesh_node("Body", body, true, _mat(Color(0.62, 0.03, 0.06), 0.55, 0.22)))
+	car.add_child(_mesh_node("Body", body, true, _mat(Color(0.7, 0.03, 0.05), 0.25, 0.3)))
 	car.add_child(_mesh_node("Glass", glass, true, _mat(Color(0.05, 0.08, 0.11), 0.2, 0.05)))
 	car.add_child(_mesh_node("Trim", trim, false, _mat(Color(0.04, 0.04, 0.045), 0.0, 0.6)))
-	car.add_child(_mesh_node("Headlights", headl, true, _mat(Color(1.0, 0.93, 0.7), 0.0, 0.2, true)))
+	car.add_child(_mesh_node("Headlights", headl, true, _mat(Color(0.9, 0.8, 0.5), 0.0, 0.3, true)))
 	car.add_child(_mesh_node("Taillights", taill, true, _mat(Color(0.9, 0.05, 0.05), 0.0, 0.3, true)))
-	car.add_child(_mesh_node("Mirrors", mirrors, true, _mat(Color(0.62, 0.03, 0.06), 0.55, 0.22)))
+	car.add_child(_mesh_node("Mirrors", mirrors, true, _mat(Color(0.7, 0.03, 0.05), 0.25, 0.3)))
 	car.add_child(_mesh_node("Tyres", tyre, true, _mat(Color(0.025, 0.025, 0.028), 0.0, 0.9)))
 	car.add_child(_mesh_node("Rims", rim, false, _mat(Color(0.78, 0.78, 0.82), 0.9, 0.25)))
 	car.add_child(_mesh_node("Brakes", brake, false, _mat(Color(0.35, 0.35, 0.38), 0.7, 0.4)))
@@ -275,7 +275,7 @@ func _initialize() -> void:
 	e.background_mode = Environment.BG_SKY
 	e.sky = sky
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	e.ambient_light_energy = 0.9
+	e.ambient_light_energy = 0.7
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.environment = e
 	vp.add_child(env)
@@ -295,13 +295,13 @@ func _initialize() -> void:
 	vp.add_child(ground)
 	vp.add_child(back if back else car)
 	var cam := Camera3D.new()
-	cam.fov = 38.0
+	cam.fov = 30.0
 	vp.add_child(cam)
 	cam.current = true
-	var views := [["car.png", Vector3(5.6, 1.7, 6.4)], ["car_side.png", Vector3(8.4, 1.2, 0.3)], ["car_rear.png", Vector3(-5.0, 1.8, -6.6)]]
+	var views := [["car.png", Vector3(5.6, 1.7, 6.4)], ["car_side.png", Vector3(8.0, 1.0, 0.3)], ["car_rear.png", Vector3(-5.0, 1.8, -6.6)]]
 	for vw in views:
 		var cpos: Vector3 = vw[1]
-		cam.global_transform = Transform3D(Basis.looking_at(Vector3(0, 0.7, 0) - cpos, Vector3.UP), cpos)
+		cam.global_transform = Transform3D(Basis.looking_at(Vector3(0, 0.65, 0) - cpos, Vector3.UP), cpos)
 		await create_timer(0.6).timeout
 		await process_frame
 		var img := root.get_viewport().get_texture().get_image()
