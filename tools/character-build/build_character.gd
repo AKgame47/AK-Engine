@@ -17,7 +17,7 @@ func _box_mesh(size: Vector3, offset: Vector3) -> ArrayMesh:
 		var p := [c - du - dv, c + du - dv, c + du + dv, c - du + dv]
 		st.set_normal(n)
 		var order := [0, 1, 2, 0, 2, 3]
-		var flip := (p[1] - p[0]).cross(p[2] - p[0]).dot(n) < 0.0
+		var flip: bool = (p[1] - p[0]).cross(p[2] - p[0]).dot(n) < 0.0
 		if flip:
 			order = [0, 2, 1, 0, 3, 2]
 		for i in order:
@@ -86,8 +86,8 @@ func _initialize() -> void:
 	var doc2 := GLTFDocument.new()
 	err = doc2.append_from_file("res://ak_character.glb", st2)
 	var back: Node = doc2.generate_scene(st2) if err == OK else null
-	var nm := back.find_children("*", "MeshInstance3D", true, false).size() if back else 0
-	var nanim := back.find_children("*", "AnimationPlayer", true, false).size() if back else 0
+	var nm: int = back.find_children("*", "MeshInstance3D", true, false).size() if back else 0
+	var nanim: int = back.find_children("*", "AnimationPlayer", true, false).size() if back else 0
 	print("CHECK gltf_reimport_meshes ", "PASS" if nm == 6 else "FAIL", " ", nm)
 	print("CHECK gltf_reimport_animation ", "PASS" if nanim == 1 else "FAIL", " ", nanim)
 
@@ -110,7 +110,7 @@ func _initialize() -> void:
 	vp.add_child(ground)
 	if back:
 		vp.add_child(back)
-		var p2 := back.find_children("*", "AnimationPlayer", true, false)
+		var p2: Array = back.find_children("*", "AnimationPlayer", true, false)
 		if p2.size() > 0:
 			(p2[0] as AnimationPlayer).play("walk")
 			(p2[0] as AnimationPlayer).seek(0.25, true)
