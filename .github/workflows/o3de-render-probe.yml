@@ -68,7 +68,7 @@ jobs:
           echo "---- vulkan devices"; vulkaninfo --summary 2>&1 | grep -iE "deviceName|driverName|apiVersion|deviceType"
           cd build/bin/profile
           echo "---- AssetProcessorBatch"
-          timeout 3600 ./AssetProcessorBatch --project-path=$E/AutomatedTesting --engine-path=$E --platforms=linux > $GITHUB_WORKSPACE/ap.log 2>&1
+          timeout 9000 ./AssetProcessorBatch --project-path=$E/AutomatedTesting --engine-path=$E --platforms=linux > $GITHUB_WORKSPACE/ap.log 2>&1
           echo "AP_EXIT $?"; tail -25 $GITHUB_WORKSPACE/ap.log | cut -c1-240
           echo "---- GameLauncher"
           Xvfb :99 -screen 0 1280x720x24 &
