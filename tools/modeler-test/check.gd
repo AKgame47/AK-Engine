@@ -72,5 +72,17 @@ func _initialize() -> void:
 	var hit_back: int = pm.pick_tri(Vector3(0.1, 0.1, -5), Vector3(0, 0, 1))
 	ok("pick_back", hit_back >= 0 and pm.tri_center(hit_back).z < -0.4, str(hit_back))
 	ok("pick_miss", pm.pick_tri(Vector3(5, 5, 5), Vector3(0, 0, -1)) == -1, "miss")
+	var im = Ops.from_primitive(BoxMesh.new())
+	var ia0: float = im.area()
+	var it0: int = im.tri_count()
+	var iv0: int = im.verts.size()
+	im.inset(PackedInt32Array([0, 1]), 0.3)
+	ok("inset_counts", im.tri_count() == it0 + 12 and im.verts.size() == iv0 + 6, "%d tris %d verts" % [im.tri_count(), im.verts.size()])
+	ok("inset_area_kept", absf(im.area() - ia0) < 0.0001, "%f vs %f" % [ia0, im.area()])
+	var iflip: int = 0
+	for t in im.tri_count():
+		if im.tri_normal(t).dot(im.tri_center(t)) < -0.0001:
+			iflip += 1
+	ok("inset_winding_outward", iflip == 0, str(iflip))
 	print("MODELER_TEST DONE")
 	quit()
