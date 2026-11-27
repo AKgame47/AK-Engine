@@ -75,11 +75,15 @@ jobs:
           sleep 3
           export DISPLAY=:99
           timeout 150 ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 > $GITHUB_WORKSPACE/launcher.log 2>&1 &
-          sleep 120
+          LP=$!
+          sleep 60
+          echo "launcher alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
+          xwininfo -root -tree 2>&1 | head -20
+          sleep 60
           import -window root $GITHUB_WORKSPACE/o3de_shot.png
           echo "SHOT_BYTES $(stat -c %s $GITHUB_WORKSPACE/o3de_shot.png 2>/dev/null)"
           sleep 20
-          tail -30 $GITHUB_WORKSPACE/launcher.log | cut -c1-240
+          grep -n -iE 'error|assert|fatal|abort|segv|crash|window|swapchain|vulkan' $GITHUB_WORKSPACE/launcher.log | head -60 | cut -c1-300; tail -15 $GITHUB_WORKSPACE/launcher.log | cut -c1-240
           } > $GITHUB_WORKSPACE/run.log 2>&1
           cat $GITHUB_WORKSPACE/run.log
       - name: Publish result
@@ -87,4 +91,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           test -s configure.log
-          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
+          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png ap.log launcher.log 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
