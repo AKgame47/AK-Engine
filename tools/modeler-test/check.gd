@@ -41,5 +41,12 @@ func _initialize() -> void:
 	for v in mm.verts:
 		xmin = minf(xmin, v.x)
 	ok("mirror_extent", absf(xmin + 1.5) < 0.001, str(xmin))
+	var wm = Ops.from_primitive(BoxMesh.new())
+	var wn: int = wm.verts.size()
+	wm.verts.append(wm.verts[0] + Vector3(0.0001, 0, 0))
+	wm.tris.append_array(PackedInt32Array([wn, 1, 2]))
+	var removed: int = wm.weld(0.01)
+	ok("weld_removed", removed == 1 and wm.verts.size() == 8, str(removed))
+	ok("weld_tris", wm.tri_count() == 13, str(wm.tri_count()))
 	print("MODELER_TEST DONE")
 	quit()
