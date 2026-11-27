@@ -42,7 +42,7 @@ jobs:
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --path ch --script res://build_character.gd 2>&1 | tee character.log
           cp ch/ak_character.glb ch/character.png ch/character_side.png ch/character_front.png . || true
           ls -la ak_character.glb character.png character_side.png character_front.png
-          ! grep -q "CHECK .* FAIL" character.log
+          if grep -q "CHECK .* FAIL" character.log; then echo "a check failed"; exit 1; fi
           grep -q "CHAR_BUILD DONE" character.log
       - uses: actions/upload-artifact@v4
         if: always()
