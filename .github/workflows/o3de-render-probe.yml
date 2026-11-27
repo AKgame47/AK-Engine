@@ -68,8 +68,14 @@ jobs:
           echo "---- vulkan devices"; vulkaninfo --summary 2>&1 | grep -iE "deviceName|driverName|apiVersion|deviceType"
           cd build/bin/profile
           echo "---- AssetProcessorBatch"
-          timeout 9000 ./AssetProcessorBatch --project-path=$E/AutomatedTesting --engine-path=$E --platforms=linux > $GITHUB_WORKSPACE/ap.log 2>&1
-          echo "AP_EXIT $?"; tail -25 $GITHUB_WORKSPACE/ap.log | cut -c1-240
+          ( while true; do date +%T; df -h / | tail -1; free -m | sed -n 2p; sleep 120; done > $GITHUB_WORKSPACE/mon.log 2>&1 ) &
+          for i in 1 2 3; do
+            timeout 2700 ./AssetProcessorBatch --project-path=$E/AutomatedTesting --engine-path=$E --platforms=linux >> $GITHUB_WORKSPACE/ap.log 2>&1
+            RC=$?; echo "AP pass $i exit $RC" >> $GITHUB_WORKSPACE/mon.log
+            [ $RC -ne 124 ] && break
+          done
+          true
+          echo "AP_EXIT $RC"; tail -25 $GITHUB_WORKSPACE/ap.log | cut -c1-240
           echo "---- GameLauncher"
           Xvfb :99 -screen 0 1280x720x24 &
           sleep 3
@@ -87,8 +93,9 @@ jobs:
           } > $GITHUB_WORKSPACE/run.log 2>&1
           cat $GITHUB_WORKSPACE/run.log
       - name: Publish result
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           test -s configure.log
-          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png ap.log launcher.log 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
+          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png ap.log launcher.log mon.log 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
