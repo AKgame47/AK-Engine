@@ -38,7 +38,7 @@ jobs:
         run: |
           set +e
           cd build
-          ninja -t targets all | grep -E '^Atom_[A-Za-z_.]*: (phony|CXX_SHARED|CXX_STATIC)' | cut -d: -f1 | sort -u > ../all_atom_targets.txt; grep -E '^Atom_RHI\.(Null|Vulkan)\.Private$|^Atom_Feature_Common(\.Static)?$' ../all_atom_targets.txt > ../targets.txt
+          ninja -t targets all | grep -E '^Atom_[A-Za-z_.]*: (phony|CXX_SHARED|CXX_STATIC)' | cut -d: -f1 | sort -u > ../all_atom_targets.txt; grep -E '^(Atom_RHI_Null\.Private|Atom_RHI_Vulkan\.Private|Atom_Bootstrap|Atom_AtomBridge\.Headless|Atom_AtomBridge)$' ../all_atom_targets.txt > ../targets.txt
           cat ../targets.txt
           START=$(date +%s)
           test -s ../targets.txt && timeout 9000 ninja -k 0 $(cat ../targets.txt) > ../build.full.log 2>&1
