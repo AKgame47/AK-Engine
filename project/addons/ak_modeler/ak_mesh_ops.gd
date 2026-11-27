@@ -204,6 +204,33 @@ func cut_plane(axis: int, at: float) -> int:
 	tris = out
 	return added
 
+func pick_tri(origin: Vector3, dir: Vector3) -> int:
+	# Nearest triangle hit by the ray (Moller-Trumbore, both sides). Returns -1 on a miss.
+	var best := -1
+	var best_t := INF
+	for t in tri_count():
+		var a := verts[tris[t * 3]]
+		var e1 := verts[tris[t * 3 + 1]] - a
+		var e2 := verts[tris[t * 3 + 2]] - a
+		var p := dir.cross(e2)
+		var det := e1.dot(p)
+		if absf(det) < 0.0000001:
+			continue
+		var inv := 1.0 / det
+		var tv := origin - a
+		var u := tv.dot(p) * inv
+		if u < 0.0 or u > 1.0:
+			continue
+		var q := tv.cross(e1)
+		var v := dir.dot(q) * inv
+		if v < 0.0 or u + v > 1.0:
+			continue
+		var dist := e2.dot(q) * inv
+		if dist > 0.0 and dist < best_t:
+			best_t = dist
+			best = t
+	return best
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
