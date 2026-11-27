@@ -1,7 +1,7 @@
 # AK Engine car asset v2: detailed procedural model built only with engine mesh code (ArrayMesh via SurfaceTool).
 # Lofted body shell (curved panels, tumblehome, hood/windshield/roof/rear-window profile), separate glass surface,
 # revolved tyres with sidewall profile, spoked rims, brake discs, lights, mirrors, grille, bumpers, door lines.
-# Status: EXPERIMENTAL scripted generation. No UVs/textures, no wheel arches, no interior. Not hyperreal.
+# Status: EXPERIMENTAL scripted generation. No UVs/textures, wheel arches are shallow scoops, no interior. Not hyperreal.
 extends SceneTree
 
 class MB extends RefCounted:
@@ -138,8 +138,8 @@ func _mesh_node(name: String, mb: MB, smooth: bool, mat: Material) -> MeshInstan
 	return mi
 
 func _initialize() -> void:
-	var NS := 84
-	var NM := 40
+	var NS := 150
+	var NM := 72
 	var top_keys := [[-2.25, 0.60], [-2.12, 0.86], [-1.75, 0.96], [-1.25, 0.98], [-0.6, 1.43], [0.3, 1.45], [1.0, 1.00], [1.5, 0.93], [2.0, 0.80], [2.25, 0.56]]
 	var w_keys := [[-2.25, 0.16], [-2.12, 0.60], [-1.8, 0.85], [-1.3, 0.90], [0.0, 0.92], [1.3, 0.90], [1.8, 0.86], [2.12, 0.66], [2.25, 0.18]]
 	var y0_keys := [[-2.25, 0.46], [-2.0, 0.30], [-1.5, 0.24], [1.5, 0.24], [2.0, 0.30], [2.25, 0.44]]
@@ -166,6 +166,12 @@ func _initialize() -> void:
 			if y > belt and yt > belt:
 				var k := clampf((y - belt) / (yt - belt), 0.0, 1.0)
 				x *= 1.0 - 0.24 * k
+			for wzc in [1.38, -1.38]:
+				var dd: float = Vector2(z - wzc, (y - 0.40) * 1.15).length()
+				if dd < 0.56 and y < 0.80:
+					var f: float = 1.0 - dd / 0.56
+					f = f * f * (3.0 - 2.0 * f)
+					x = signf(x) * maxf(absf(x) - 0.20 * f, 0.55)
 			row.append(Vector3(x, y, z))
 		grid.append(row)
 		cen.append(Vector3(0, yc, z))
