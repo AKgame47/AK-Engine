@@ -131,6 +131,29 @@ func mirror_x() -> void:
 		tris.append(remap[tris[t * 3 + 2]])
 		tris.append(remap[tris[t * 3 + 1]])
 
+func weld(dist: float) -> int:
+	# Merge vertices closer than dist (grid snap). Drops degenerate triangles. Returns removed vertex count.
+	var before := verts.size()
+	var map := {}
+	var remap := PackedInt32Array()
+	var nv := PackedVector3Array()
+	for v in verts:
+		var key := Vector3i((v / dist).round())
+		if not map.has(key):
+			map[key] = nv.size()
+			nv.append(v)
+		remap.append(map[key])
+	var nt := PackedInt32Array()
+	for t in tri_count():
+		var a := remap[tris[t * 3]]
+		var b := remap[tris[t * 3 + 1]]
+		var c := remap[tris[t * 3 + 2]]
+		if a != b and b != c and a != c:
+			nt.append_array(PackedInt32Array([a, b, c]))
+	verts = nv
+	tris = nt
+	return before - nv.size()
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
