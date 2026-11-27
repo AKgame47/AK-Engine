@@ -40,8 +40,8 @@ jobs:
           ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --headless --path ch --import 2>&1 | tail -3
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --path ch --script res://build_character.gd 2>&1 | tee character.log
-          cp ch/ak_character.glb ch/character.png . || true
-          ls -la ak_character.glb character.png
+          cp ch/ak_character.glb ch/character.png ch/character_side.png ch/character_front.png . || true
+          ls -la ak_character.glb character.png character_side.png character_front.png
           ! grep -q "CHECK .* FAIL" character.log
           grep -q "CHAR_BUILD DONE" character.log
       - uses: actions/upload-artifact@v4
@@ -52,9 +52,11 @@ jobs:
             character.log
             ak_character.glb
             character.png
+            character_side.png
+            character_front.png
       - name: Publish result
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create character-build-run${{ github.run_number }} character.log ak_character.glb character.png --repo "$GITHUB_REPOSITORY" --title "Character build run ${{ github.run_number }}" --notes "CI: a blocky humanoid character with a walk animation built with engine mesh APIs (SurfaceTool), exported to glTF, re-imported and rendered. Stylized, not hyperreal. Built from $GITHUB_SHA." --prerelease
+          gh release create character-build-run${{ github.run_number }} character.log ak_character.glb character.png character_side.png character_front.png --repo "$GITHUB_REPOSITORY" --title "Character build run ${{ github.run_number }}" --notes "CI: a blocky humanoid character with a walk animation built with engine mesh APIs (SurfaceTool), exported to glTF, re-imported and rendered. Stylized, not hyperreal. Built from $GITHUB_SHA." --prerelease
