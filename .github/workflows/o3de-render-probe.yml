@@ -109,7 +109,7 @@ jobs:
           rm -f $E/AutomatedTesting/autoexec.cfg
           for LV in Levels/Graphics/hermanubis/hermanubis.spawnable Levels/Graphics/base_empty/base_empty.spawnable Levels/Graphics/hermanubis/hermanubis.spawnable; do
             N=$((N+1))
-            timeout 420 ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 +LoadLevel $LV > $GITHUB_WORKSPACE/launcher_$N.log 2>&1 &
+            timeout 420 ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 +r_width 640 +r_height 360 +r_fullscreen 0 +LoadLevel $LV > $GITHUB_WORKSPACE/launcher_$N.log 2>&1 &
             LP=$!
             sleep 250
             echo "attempt $N level $LV alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
