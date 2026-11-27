@@ -41,7 +41,7 @@ jobs:
           ninja -t targets all | grep -E '^(AzCore|Atom_RHI\.Public|Atom_RPI\.Public|Atom_RHI\.Reflect|Atom_RPI\.Reflect)[:]' | head > ../targets.txt
           cat ../targets.txt
           START=$(date +%s)
-          timeout 9000 ninja -k 0 AzCore Atom_RHI.Reflect Atom_RHI.Public Atom_RPI.Reflect Atom_RPI.Public > ../build.full.log 2>&1
+          timeout 9000 ninja -k 0 AzCore Atom_RHI.Reflect Atom_RHI.Public Atom_RPI.Public > ../build.full.log 2>&1
           RC=$?
           END=$(date +%s)
           {
