@@ -1,0 +1,64 @@
+name: car-import
+# Builds the AK editor (cached), downloads a third-party CC0 glTF car, imports it with the engine importer and renders it.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch pinned Godot
+        run: git clone --depth 1 --branch 4.7.2-stable https://github.com/godotengine/godot.git godot
+      - name: AK name patch
+        working-directory: godot
+        run: sed -i 's/^name = "Godot Engine"/name = "AK Engine"/' version.py
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev libwayland-dev xvfb libgl1-mesa-dri imagemagick
+      - uses: actions/cache@v4
+        with:
+          path: godot/.scons_cache
+          key: scons-akeditor-${{ github.run_id }}
+          restore-keys: |
+            scons-akeditor-
+            scons-export-
+      - name: Build editor
+        working-directory: godot
+        env:
+          SCONS_CACHE: .scons_cache
+          SCONS_CACHE_LIMIT: 6144
+        run: scons platform=linuxbsd target=editor debug_symbols=no module_raycast_enabled=no -j$(nproc)
+      - name: Import the CC0 car with the engine glTF importer
+        run: |
+          mkdir -p ci
+          cp tools/car-import/import_car.gd ci/import_car.gd
+          curl -sSL -o ci/supercar_lod1.glb https://tevy.dev/models/supercar/v2/lod1.glb
+          ls -la ci/supercar_lod1.glb
+          head -c 4 ci/supercar_lod1.glb | od -c | head -1
+          sha256sum ci/supercar_lod1.glb | tee import.log
+          printf 'config_version=5\n\n[application]\nconfig/name="car-import"\n\n[display]\nwindow/size/viewport_width=960\nwindow/size/viewport_height=540\n\n[rendering]\nrenderer/rendering_method="gl_compatibility"\n' > ci/project.godot
+          ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
+          xvfb-run -a -s "-screen 0 1280x720x24" $ED --headless --path ci --import 2>&1 | tail -3
+          xvfb-run -a -s "-screen 0 1280x720x24" $ED --path ci --script res://import_car.gd 2>&1 | tee -a import.log
+          cp ci/import.png ci/import_side.png . || true
+          ls -la import.png import_side.png
+          ! grep -q "CHECK .* FAIL" import.log
+          grep -q "CAR_IMPORT DONE" import.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: car-import
+          path: |
+            import.log
+            import.png
+            import_side.png
+      - name: Publish result
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create car-import-run${{ github.run_number }} import.log import.png import_side.png --repo "$GITHUB_REPOSITORY" --title "CC0 car import run ${{ github.run_number }}" --notes "CI: third-party CC0 car (tevy.dev Mid-Engine Supercar v2 LOD1, publisher-declared CC0 1.0) loaded with the engine glTF importer and rendered. Not made by AK Engine. Built from $GITHUB_SHA." --prerelease
