@@ -38,17 +38,17 @@ jobs:
         run: |
           set +e
           cd build
-          ninja -t targets all | grep -E '^(AzCore|Atom_RHI\.Public|Atom_RPI\.Public|Atom_RHI\.Reflect|Atom_RPI\.Reflect)[:]' | head > ../targets.txt
+          ninja -t targets all | grep -E '^Atom_[A-Za-z_.]*: (phony|CXX_SHARED|CXX_STATIC)' | cut -d: -f1 | sort -u > ../all_atom_targets.txt; grep -E '^Atom_RHI\.(Null|Vulkan)\.Private$|^Atom_Feature_Common(\.Static)?$' ../all_atom_targets.txt > ../targets.txt
           cat ../targets.txt
           START=$(date +%s)
-          timeout 9000 ninja -k 0 AzCore Atom_RHI.Reflect Atom_RHI.Public Atom_RPI.Public > ../build.full.log 2>&1
+          test -s ../targets.txt && timeout 9000 ninja -k 0 $(cat ../targets.txt) > ../build.full.log 2>&1
           RC=$?
           END=$(date +%s)
           {
           echo "O3DE_BUILD_EXIT $RC"
           echo "BUILD_SECONDS $((END-START))"
           echo "BUILD_DIR_MB $(du -sm . | cut -f1)"
-          echo "---- targets found"; cat ../targets.txt
+          echo "---- building"; cat ../targets.txt; echo "---- all Atom_ targets"; cat ../all_atom_targets.txt
           echo "---- last 40 lines"; tail -40 ../build.full.log
           } > ../build.log
           cat ../build.log
