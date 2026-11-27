@@ -65,7 +65,7 @@ func _initialize() -> void:
 	car.name = "AKCar"
 	car.add_child(_part("Body", Color(0.75, 0.05, 0.08), func(st): _box(st, Vector3(0, 0.55, 0), Vector3(1.8, 0.5, 4.2))))
 	car.add_child(_part("Cabin", Color(0.12, 0.14, 0.18), func(st): _box(st, Vector3(0, 1.05, -0.2), Vector3(1.6, 0.55, 2.2), 0.8)))
-	car.add_child(_part("Tyres", Color(0.03, 0.03, 0.03), func(st):
+	car.add_child(_part("Tyres", Color(0.12, 0.12, 0.13), func(st):
 		for x in [-0.95, 0.95]:
 			for z in [-1.35, 1.35]:
 				_wheel(st, Vector3(x, 0.38, z), 0.38, 0.3)))
@@ -102,11 +102,13 @@ func _initialize() -> void:
 	e.background_mode = Environment.BG_COLOR
 	e.background_color = Color(0.06, 0.06, 0.08)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.5, 0.5, 0.55)
+	e.ambient_light_color = Color(0.8, 0.8, 0.85)
+	e.ambient_light_energy = 1.2
 	env.environment = e
 	vp.add_child(env)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-45, -35, 0)
+	sun.light_energy = 1.4
 	vp.add_child(sun)
 	var ground := MeshInstance3D.new()
 	var pm := PlaneMesh.new(); pm.size = Vector2(30, 30)
@@ -115,8 +117,9 @@ func _initialize() -> void:
 	vp.add_child(back if back else car)
 	var cam := Camera3D.new()
 	vp.add_child(cam)
-	cam.position = Vector3(5.5, 2.6, 6.0)
-	cam.look_at(Vector3(0, 0.7, 0))
+	cam.position = Vector3(7.5, 3.2, 8.5)
+	cam.fov = 55.0
+	cam.look_at(Vector3(0, 0.6, 0))
 	cam.current = true
 	await create_timer(1.0).timeout
 	await process_frame
