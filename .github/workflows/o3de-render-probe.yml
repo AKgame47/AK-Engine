@@ -14,14 +14,20 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build clang libunwind-dev libwayland-dev wayland-protocols libegl1-mesa-dev libxcb-cursor-dev libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev libxcb-xrm-dev libxkbfile-dev libxrender-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxss-dev libssl-dev mesa-vulkan-drivers vulkan-tools libglu1-mesa-dev libxcb-xinerama0 libxcb-xinput0 libxcb-xinput-dev libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libcurl4-openssl-dev libnvidia-egl-wayland1 libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-randr0-dev zlib1g-dev libpcre2-16-0
+          sudo apt-get install -y ccache imagemagick xvfb x11-utils ninja-build clang libunwind-dev libwayland-dev wayland-protocols libegl1-mesa-dev libxcb-cursor-dev libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev libxcb-xrm-dev libxkbfile-dev libxrender-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxss-dev libssl-dev mesa-vulkan-drivers vulkan-tools libglu1-mesa-dev libxcb-xinerama0 libxcb-xinput0 libxcb-xinput-dev libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libcurl4-openssl-dev libnvidia-egl-wayland1 libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-randr0-dev zlib1g-dev libpcre2-16-0
           cmake --version
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-o3de-${{ github.run_id }}
+          restore-keys: |
+            ccache-o3de-
       - name: Configure (log only)
         continue-on-error: true
         run: |
           START=$(date +%s)
           set +e
-          cmake -S o3de -B build -G Ninja -DCMAKE_BUILD_TYPE=profile -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLY_DISABLE_TEST_MODULES=ON -DLY_PROJECTS=AutomatedTesting > configure.full.log 2>&1
+          cmake -S o3de -B build -G Ninja -DCMAKE_BUILD_TYPE=profile -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DLY_DISABLE_TEST_MODULES=ON -DLY_PROJECTS=AutomatedTesting > configure.full.log 2>&1
           RC=$?
           END=$(date +%s)
           {
@@ -38,7 +44,7 @@ jobs:
         run: |
           set +e
           cd build
-          ninja -t targets all | grep -E '^(AssetProcessorBatch|AutomatedTesting\.GameLauncher|AutomatedTesting\.Assets|AssetBuilder|AutomatedTesting\.Builders|ShaderManagementConsole)[:]' | cut -d: -f1 | sort -u > ../targets.txt; ninja -t targets all | grep -E '(Launcher|AssetProcessor|Assets)[A-Za-z_.]*: (phony|CXX_EXECUTABLE|CUSTOM_COMMAND)' | cut -d: -f1 | sort -u | head -80 > ../all_atom_targets.txt
+          ninja -t targets all | grep -E '^(AssetProcessorBatch|AutomatedTesting\.GameLauncher|AssetBuilder|ShaderManagementConsole)[:]' | cut -d: -f1 | sort -u > ../targets.txt; ninja -t targets all | grep -E '(Launcher|AssetProcessor|Assets)[A-Za-z_.]*: (phony|CXX_EXECUTABLE|CUSTOM_COMMAND)' | cut -d: -f1 | sort -u | head -80 > ../all_atom_targets.txt
           cat ../targets.txt
           START=$(date +%s)
           test -s ../targets.txt && timeout 19000 ninja -k 0 $(cat ../targets.txt) > ../build.full.log 2>&1
@@ -53,9 +59,32 @@ jobs:
           echo "---- last 40 lines"; tail -40 ../build.full.log
           } > ../build.log
           cat ../build.log
+      - name: Run AssetProcessor and launcher (log only)
+        continue-on-error: true
+        run: |
+          set +e
+          E=$PWD/o3de
+          {
+          echo "---- vulkan devices"; vulkaninfo --summary 2>&1 | grep -iE "deviceName|driverName|apiVersion|deviceType"
+          cd build/bin/profile
+          echo "---- AssetProcessorBatch"
+          timeout 3600 ./AssetProcessorBatch --project-path=$E/AutomatedTesting --engine-path=$E --platforms=linux > $GITHUB_WORKSPACE/ap.log 2>&1
+          echo "AP_EXIT $?"; tail -25 $GITHUB_WORKSPACE/ap.log | cut -c1-240
+          echo "---- GameLauncher"
+          Xvfb :99 -screen 0 1280x720x24 &
+          sleep 3
+          export DISPLAY=:99
+          timeout 150 ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 > $GITHUB_WORKSPACE/launcher.log 2>&1 &
+          sleep 120
+          import -window root $GITHUB_WORKSPACE/o3de_shot.png
+          echo "SHOT_BYTES $(stat -c %s $GITHUB_WORKSPACE/o3de_shot.png 2>/dev/null)"
+          sleep 20
+          tail -30 $GITHUB_WORKSPACE/launcher.log | cut -c1-240
+          } > $GITHUB_WORKSPACE/run.log 2>&1
+          cat $GITHUB_WORKSPACE/run.log
       - name: Publish result
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           test -s configure.log
-          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
+          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
