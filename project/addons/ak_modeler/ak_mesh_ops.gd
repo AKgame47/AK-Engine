@@ -154,6 +154,56 @@ func weld(dist: float) -> int:
 	tris = nt
 	return before - nv.size()
 
+func area() -> float:
+	var a := 0.0
+	for t in tri_count():
+		a += 0.5 * (verts[tris[t * 3 + 1]] - verts[tris[t * 3]]).cross(verts[tris[t * 3 + 2]] - verts[tris[t * 3]]).length()
+	return a
+
+func cut_plane(axis: int, at: float) -> int:
+	# Loop-cut style split: cut every triangle crossing the plane coord[axis] == at.
+	# New vertices sit on the plane and an edge runs along the plane. Returns new vertex count.
+	var eps := 0.00001
+	var cache := {}
+	var out := PackedInt32Array()
+	var added := 0
+	for t in tri_count():
+		var ids := [tris[t * 3], tris[t * 3 + 1], tris[t * 3 + 2]]
+		var sg := []
+		for i in ids:
+			var d: float = verts[i][axis] - at
+			sg.append(1 if d > eps else (-1 if d < -eps else 0))
+		if not (sg.has(1) and sg.has(-1)):
+			out.append_array(PackedInt32Array(ids))
+			continue
+		var poly := []
+		var first_new := -1
+		for k in 3:
+			var a: int = ids[k]
+			var b: int = ids[(k + 1) % 3]
+			poly.append(a)
+			if sg[k] * sg[(k + 1) % 3] == -1:
+				var key := Vector2i(mini(a, b), maxi(a, b))
+				if not cache.has(key):
+					var va := verts[a]
+					var vb := verts[b]
+					var u: float = (at - va[axis]) / (vb[axis] - va[axis])
+					var p := va.lerp(vb, u)
+					p[axis] = at
+					cache[key] = verts.size()
+					verts.append(p)
+					added += 1
+				poly.append(cache[key])
+				if first_new < 0:
+					first_new = poly.size() - 1
+		var n: int = poly.size()
+		for j in range(1, n - 1):
+			out.append(poly[(first_new) % n])
+			out.append(poly[(first_new + j) % n])
+			out.append(poly[(first_new + j + 1) % n])
+	tris = out
+	return added
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
