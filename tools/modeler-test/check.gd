@@ -66,5 +66,11 @@ func _initialize() -> void:
 		if cm.tri_normal(t).dot(c) < -0.0001:
 			flipped += 1
 	ok("cut_winding_outward", flipped == 0, str(flipped))
+	var pm = Ops.from_primitive(BoxMesh.new())
+	var hit: int = pm.pick_tri(Vector3(0.1, 0.1, 5), Vector3(0, 0, -1))
+	ok("pick_front", hit >= 0 and pm.tri_center(hit).z > 0.4, str(hit))
+	var hit_back: int = pm.pick_tri(Vector3(0.1, 0.1, -5), Vector3(0, 0, 1))
+	ok("pick_back", hit_back >= 0 and pm.tri_center(hit_back).z < -0.4, str(hit_back))
+	ok("pick_miss", pm.pick_tri(Vector3(5, 5, 5), Vector3(0, 0, -1)) == -1, "miss")
 	print("MODELER_TEST DONE")
 	quit()
