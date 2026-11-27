@@ -16,7 +16,7 @@ class MB extends RefCounted:
 		var n: Vector3 = (v[i] - v[j]).cross(v[i] - v[k])
 		var cen: Vector3 = (v[i] + v[j] + v[k]) / 3.0
 		var anc: Vector3 = (a[i] + a[j] + a[k]) / 3.0
-		if n.dot(cen - anc) < 0.0:
+		if n.dot(cen - anc) > 0.0:
 			var tmp := j
 			j = k
 			k = tmp
