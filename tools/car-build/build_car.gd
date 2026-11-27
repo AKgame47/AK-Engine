@@ -119,7 +119,10 @@ func _initialize() -> void:
 	vp.add_child(cam)
 	cam.position = Vector3(7.5, 3.2, 8.5)
 	cam.fov = 55.0
-	cam.look_at(Vector3(0, 0.6, 0))
+	var cpos := Vector3(7.5, 3.2, 8.5)
+	var tgt := Vector3(0, 0.6, 0)
+	cam.global_transform = Transform3D(Basis.looking_at(tgt - cpos, Vector3.UP), cpos)
+	print('CAM ', cam.global_transform, ' CARPOS ', (back if back else car).global_position)
 	cam.current = true
 	await create_timer(1.0).timeout
 	await process_frame
