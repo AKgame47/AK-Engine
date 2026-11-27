@@ -34,11 +34,11 @@ class MB extends RefCounted:
 		var sn := PackedVector3Array()
 		sn.resize(v.size())
 		for q in range(0, t.size(), 3):
-			var n: Vector3 = (v[t[q]] - v[t[q + 1]]).cross(v[t[q]] - v[t[q + 2]])
+			var n: Vector3 = (v[t[q]] - v[t[q + 2]]).cross(v[t[q]] - v[t[q + 1]])
 			for r in 3:
 				sn[t[q + r]] += n
 		for q in range(0, t.size(), 3):
-			var fn: Vector3 = (v[t[q]] - v[t[q + 1]]).cross(v[t[q]] - v[t[q + 2]]).normalized()
+			var fn: Vector3 = (v[t[q]] - v[t[q + 2]]).cross(v[t[q]] - v[t[q + 1]]).normalized()
 			for r in 3:
 				var idx: int = t[q + r]
 				st.set_normal(sn[idx].normalized() if smooth else fn)
