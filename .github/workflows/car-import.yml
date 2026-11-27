@@ -40,13 +40,17 @@ jobs:
           ls -la ci/supercar_lod1.glb
           head -c 4 ci/supercar_lod1.glb | od -c | head -1
           sha256sum ci/supercar_lod1.glb | tee import.log
+          # The file uses EXT_meshopt_compression, which the engine glTF importer does not read: decode it first with the open-source glTF-Transform tool.
+          npx --yes @gltf-transform/cli@4 copy ci/supercar_lod1.glb ci/supercar_dec.glb 2>&1 | tee -a import.log
+          mv ci/supercar_dec.glb ci/supercar_lod1.glb
+          ls -la ci/supercar_lod1.glb
           printf 'config_version=5\n\n[application]\nconfig/name="car-import"\n\n[display]\nwindow/size/viewport_width=960\nwindow/size/viewport_height=540\n\n[rendering]\nrenderer/rendering_method="gl_compatibility"\n' > ci/project.godot
           ED=$PWD/godot/bin/godot.linuxbsd.editor.x86_64
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --headless --path ci --import 2>&1 | tail -3
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --path ci --script res://import_car.gd 2>&1 | tee -a import.log
           cp ci/import.png ci/import_side.png . || true
           ls -la import.png import_side.png
-          ! grep -q "CHECK .* FAIL" import.log
+          if grep -q "CHECK .* FAIL" import.log; then echo "a check failed"; exit 1; fi
           grep -q "CAR_IMPORT DONE" import.log
       - uses: actions/upload-artifact@v4
         if: always()
