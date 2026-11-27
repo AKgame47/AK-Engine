@@ -14,7 +14,7 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache imagemagick xvfb x11-utils ninja-build clang libunwind-dev libwayland-dev wayland-protocols libegl1-mesa-dev libxcb-cursor-dev libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev libxcb-xrm-dev libxkbfile-dev libxrender-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxss-dev libssl-dev mesa-vulkan-drivers vulkan-tools libglu1-mesa-dev libxcb-xinerama0 libxcb-xinput0 libxcb-xinput-dev libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libcurl4-openssl-dev libnvidia-egl-wayland1 libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-randr0-dev zlib1g-dev libpcre2-16-0
+          sudo apt-get install -y ccache imagemagick xvfb x11-utils ninja-build gdb clang libunwind-dev libwayland-dev wayland-protocols libegl1-mesa-dev libxcb-cursor-dev libxcb-shape0-dev libxcb-sync-dev libxcb-util-dev libxcb-xrm-dev libxkbfile-dev libxrender-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxss-dev libssl-dev mesa-vulkan-drivers vulkan-tools libglu1-mesa-dev libxcb-xinerama0 libxcb-xinput0 libxcb-xinput-dev libxcb-xfixes0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libcurl4-openssl-dev libnvidia-egl-wayland1 libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-randr0-dev zlib1g-dev libpcre2-16-0
           cmake --version
       - uses: actions/cache@v4
         with:
@@ -74,7 +74,7 @@ jobs:
           Xvfb :99 -screen 0 1280x720x24 &
           sleep 3
           export DISPLAY=:99
-          timeout 150 ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 > $GITHUB_WORKSPACE/launcher.log 2>&1 &
+          timeout 150 gdb -batch -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 40' -ex 'info threads' --args ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 > $GITHUB_WORKSPACE/launcher.log 2>&1 &
           LP=$!
           sleep 60
           echo "launcher alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
@@ -83,7 +83,7 @@ jobs:
           import -window root $GITHUB_WORKSPACE/o3de_shot.png
           echo "SHOT_BYTES $(stat -c %s $GITHUB_WORKSPACE/o3de_shot.png 2>/dev/null)"
           sleep 20
-          grep -n -iE 'error|assert|fatal|abort|segv|crash|window|swapchain|vulkan' $GITHUB_WORKSPACE/launcher.log | head -60 | cut -c1-300; tail -15 $GITHUB_WORKSPACE/launcher.log | cut -c1-240
+          grep -n -iE 'error|assert|fatal|abort|segv|crash|window|swapchain|vulkan' $GITHUB_WORKSPACE/launcher.log | head -60 | cut -c1-300; tail -90 $GITHUB_WORKSPACE/launcher.log | cut -c1-240
           } > $GITHUB_WORKSPACE/run.log 2>&1
           cat $GITHUB_WORKSPACE/run.log
       - name: Publish result
