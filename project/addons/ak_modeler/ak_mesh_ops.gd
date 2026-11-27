@@ -231,6 +231,34 @@ func pick_tri(origin: Vector3, dir: Vector3) -> int:
 			best = t
 	return best
 
+func inset(sel: PackedInt32Array, k: float) -> void:
+	# Inset each selected triangle toward its centre by factor k (0..1). Each becomes an inner
+	# triangle plus 3 border quads (6 triangles). Winding is kept. This is the face step of a bevel,
+	# not a full edge bevel.
+	var s := {}
+	for t in sel:
+		s[t] = true
+	var out := PackedInt32Array()
+	for t in tri_count():
+		var a: int = tris[t * 3]
+		var b: int = tris[t * 3 + 1]
+		var c: int = tris[t * 3 + 2]
+		if not s.has(t):
+			out.append_array(PackedInt32Array([a, b, c]))
+			continue
+		var ctr := tri_center(t)
+		var ia := verts.size()
+		verts.append(verts[a].lerp(ctr, k))
+		verts.append(verts[b].lerp(ctr, k))
+		verts.append(verts[c].lerp(ctr, k))
+		var ib := ia + 1
+		var ic := ia + 2
+		out.append_array(PackedInt32Array([ia, ib, ic]))
+		out.append_array(PackedInt32Array([a, b, ib, a, ib, ia]))
+		out.append_array(PackedInt32Array([b, c, ic, b, ic, ib]))
+		out.append_array(PackedInt32Array([c, a, ia, c, ia, ic]))
+	tris = out
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
