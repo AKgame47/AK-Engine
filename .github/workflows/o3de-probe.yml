@@ -1,0 +1,38 @@
+name: o3de-probe
+# M1 of docs/O3DE-INTEGRATION.md: fetch O3DE at the pinned tag and log real size, file counts, licence files and runner disk. No build here.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Fetch pinned O3DE
+        run: |
+          git clone --depth 1 --branch 2610.0 https://github.com/o3de/o3de.git o3de
+          cd o3de && git log -1 --format='COMMIT %H %cd'
+      - name: Measure
+        run: |
+          {
+          echo "O3DE_TAG 2610.0"
+          cd o3de
+          git log -1 --format='COMMIT %H %cd'
+          echo "FILES $(git ls-files | wc -l)"
+          echo "SIZE_MB $(du -sm --exclude=.git . | cut -f1)"
+          echo "CPP_FILES $(git ls-files | grep -E '\.(cpp|h|hpp|inl)$' | wc -l)"
+          echo "ATOM_FILES $(git ls-files | grep -E '^Gems/Atom/' | wc -l)"
+          echo "LICENSE_FILES"; ls LICENSE* 
+          echo "THIRD_PARTY_HEAD"; sed -n 1,40p LICENSE.txt
+          echo "ATOM_TOP"; ls Gems/Atom Gems/Atom/RPI Gems/Atom/RHI 2>&1 | head -60
+          echo "CMAKE_MIN"; grep -m1 -i cmake_minimum_required CMakeLists.txt
+          echo "RUNNER_DISK_FREE_GB $(df -BG --output=avail / | tail -1 | tr -dc 0-9)"
+          echo "RUNNER_CPUS $(nproc) MEM_GB $(free -g | awk '/Mem/{print $2}')"
+          } 2>&1 | tee ../probe.log
+          if ! grep -q '^FILES [1-9]' ../probe.log; then exit 1; fi
+      - name: Publish result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create o3de-probe-run${{ github.run_number }} probe.log --repo "$GITHUB_REPOSITORY" --title "O3DE probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 fetched and measured. No build. Commit $GITHUB_SHA." --prerelease
