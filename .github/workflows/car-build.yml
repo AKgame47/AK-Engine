@@ -42,7 +42,7 @@ jobs:
           xvfb-run -a -s "-screen 0 1280x720x24" $ED --path cb --script res://build_car.gd 2>&1 | tee car.log
           cp cb/ak_car.glb cb/car.png cb/car_side.png cb/car_rear.png . || true
           ls -la ak_car.glb car.png car_side.png car_rear.png
-          ! grep -q "CHECK .* FAIL" car.log
+          if grep -q "CHECK .* FAIL" car.log; then echo "a check failed"; exit 1; fi
           grep -q "CAR_BUILD DONE" car.log
       - uses: actions/upload-artifact@v4
         if: always()
