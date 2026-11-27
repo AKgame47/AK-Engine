@@ -11,6 +11,10 @@ jobs:
     steps:
       - name: Fetch pinned O3DE
         run: git clone --depth 1 --branch 2610.0 https://github.com/o3de/o3de.git o3de
+      - uses: actions/cache@v4
+        with:
+          path: o3de/AutomatedTesting/Cache
+          key: apcache-o3de-2610-v1
       - name: Patch Vulkan allocator callbacks (experiment)
         run: |
           grep -rn "VkSystemAllocator::Get" o3de/Gems/Atom/RHI/Vulkan | head -20 | tee patch.log
@@ -93,16 +97,20 @@ jobs:
           Xvfb :99 -screen 0 1920x1080x24 &
           sleep 3
           export DISPLAY=:99
-          timeout 330 gdb -batch -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 40' -ex 'info threads' --args ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 +LoadLevel Graphics/hermanubis/hermanubis > $GITHUB_WORKSPACE/launcher.log 2>&1 &
-          LP=$!
-          sleep 60
-          echo "launcher alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
-          xwininfo -root -tree 2>&1 | head -20
-          for t in 1 2 3 4; do sleep 60; import -window root $GITHUB_WORKSPACE/o3de_shot_$t.png; echo "shot $t bytes $(stat -c %s $GITHUB_WORKSPACE/o3de_shot_$t.png)"; done
+          N=0
+          for LV in hermanubis Graphics/hermanubis hermanubis/hermanubis Levels/Graphics/hermanubis/hermanubis; do
+            N=$((N+1))
+            timeout 200 gdb -batch -ex 'handle SIGPIPE nostop noprint' -ex run -ex 'bt 40' --args ./AutomatedTesting.GameLauncher --project-path=$E/AutomatedTesting --engine-path=$E --rhi=vulkan -bg_ConnectToAssetProcessor=0 +LoadLevel $LV > $GITHUB_WORKSPACE/launcher_$N.log 2>&1 &
+            LP=$!
+            sleep 100
+            echo "attempt $N level $LV alive: $(kill -0 $LP 2>/dev/null && echo yes || echo no)"
+            import -window root $GITHUB_WORKSPACE/o3de_shot_$N.png; echo "shot $N bytes $(stat -c %s $GITHUB_WORKSPACE/o3de_shot_$N.png)"
+            pkill -f AutomatedTesting.GameLauncher; sleep 5
+          done
           cp $GITHUB_WORKSPACE/o3de_shot_4.png $GITHUB_WORKSPACE/o3de_shot.png
-          echo "SHOT_BYTES $(stat -c %s $GITHUB_WORKSPACE/o3de_shot.png 2>/dev/null)"
+          cp $GITHUB_WORKSPACE/launcher_1.log $GITHUB_WORKSPACE/launcher.log
           sleep 20
-          grep -n -iE 'error|assert|fatal|abort|segv|crash|window|swapchain|vulkan' $GITHUB_WORKSPACE/launcher.log | head -60 | cut -c1-300; tail -90 $GITHUB_WORKSPACE/launcher.log | cut -c1-240
+          for n in 1 2 3 4; do echo "== launcher_$n"; grep -v 'Module:\|New Thread' $GITHUB_WORKSPACE/launcher_$n.log | grep -iE 'level|spawnable|error|assert' | head -15 | cut -c1-250; done
           } > $GITHUB_WORKSPACE/run.log 2>&1
           cat $GITHUB_WORKSPACE/run.log
       - name: Publish result
@@ -111,4 +119,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           test -s configure.log
-          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png o3de_shot_1.png o3de_shot_2.png o3de_shot_3.png ap.log launcher.log mon.log patch.log) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
+          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png o3de_shot_1.png o3de_shot_2.png o3de_shot_3.png o3de_shot_4.png ap.log launcher.log launcher_2.log launcher_3.log launcher_4.log mon.log patch.log) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
