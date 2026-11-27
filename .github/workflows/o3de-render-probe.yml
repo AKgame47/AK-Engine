@@ -11,6 +11,19 @@ jobs:
     steps:
       - name: Fetch pinned O3DE
         run: git clone --depth 1 --branch 2610.0 https://github.com/o3de/o3de.git o3de
+      - name: Patch Vulkan allocator callbacks (experiment)
+        run: |
+          grep -rn "VkSystemAllocator::Get" o3de/Gems/Atom/RHI/Vulkan | head -20 | tee patch.log
+          python3 - <<'PY' | tee -a patch.log
+          import re,glob
+          n=0
+          for p in glob.glob('o3de/Gems/Atom/RHI/Vulkan/**/*.cpp',recursive=True):
+              t=open(p).read()
+              t2=re.sub(r'(VkAllocationCallbacks\s*\*\s*VkSystemAllocator::Get\s*\(\s*\)\s*\{)',r'\1 return nullptr;',t)
+              if t2!=t:
+                  open(p,'w').write(t2); n+=1; print('patched',p)
+          print('files patched',n)
+          PY
       - name: Dependencies
         run: |
           sudo apt-get update
@@ -98,4 +111,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           test -s configure.log
-          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png ap.log launcher.log mon.log 2>/dev/null) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
+          gh release create o3de-render-probe-run${{ github.run_number }} configure.log build.log $(ls run.log o3de_shot.png ap.log launcher.log mon.log patch.log) --repo "$GITHUB_REPOSITORY" --title "O3DE render probe run ${{ github.run_number }}" --notes "CI: O3DE 2610.0 configure plus AzCore, Atom RHI, Atom RPI library build attempt. Log only. Commit $GITHUB_SHA." --prerelease
