@@ -48,5 +48,23 @@ func _initialize() -> void:
 	var removed: int = wm.weld(0.01)
 	ok("weld_removed", removed == 1 and wm.verts.size() == 8, str(removed))
 	ok("weld_tris", wm.tri_count() == 13, str(wm.tri_count()))
+	var cm = Ops.from_primitive(BoxMesh.new())
+	cm.subdivide()
+	var a_before: float = cm.area()
+	var t_before: int = cm.tri_count()
+	var added: int = cm.cut_plane(1, 0.13)
+	var on_plane: int = 0
+	for v in cm.verts:
+		if absf(v.y - 0.13) < 0.0001:
+			on_plane += 1
+	ok("cut_adds_verts", added > 0 and on_plane >= added, "%d added %d on plane" % [added, on_plane])
+	ok("cut_splits_tris", cm.tri_count() > t_before, "%d -> %d" % [t_before, cm.tri_count()])
+	ok("cut_area_kept", absf(cm.area() - a_before) < 0.0001, "%f vs %f" % [a_before, cm.area()])
+	var flipped: int = 0
+	for t in cm.tri_count():
+		var c: Vector3 = cm.tri_center(t)
+		if cm.tri_normal(t).dot(c) < -0.0001:
+			flipped += 1
+	ok("cut_winding_outward", flipped == 0, str(flipped))
 	print("MODELER_TEST DONE")
 	quit()
