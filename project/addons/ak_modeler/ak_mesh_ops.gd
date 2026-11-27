@@ -113,6 +113,24 @@ func extrude(sel: PackedInt32Array, dist: float) -> void:
 		for e in 3:
 			tris[t * 3 + e] = dup[tris[t * 3 + e]]
 
+func mirror_x() -> void:
+	# Mirror across the YZ plane (x = 0). Appends mirrored copy, flips winding, welds verts on the seam.
+	var n := verts.size()
+	var remap := PackedInt32Array()
+	remap.resize(n)
+	for i in n:
+		var v := verts[i]
+		if absf(v.x) < 0.0001:
+			remap[i] = i
+		else:
+			remap[i] = verts.size()
+			verts.append(Vector3(-v.x, v.y, v.z))
+	var t0 := tri_count()
+	for t in t0:
+		tris.append(remap[tris[t * 3]])
+		tris.append(remap[tris[t * 3 + 2]])
+		tris.append(remap[tris[t * 3 + 1]])
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
