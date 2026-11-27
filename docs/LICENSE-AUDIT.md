@@ -37,3 +37,11 @@ Rules that follow:
 | Godot 4.7.2 | Used as the runtime and built in CI. | MIT. Keep `COPYRIGHT.txt` and notices in any release. |
 
 Still open: the dependency trees of O3DE (3p packages) and Blender (lib repo), and `THIRD_PARTY_NOTICES.md`. Qt (LGPL-3.0) stays out.
+
+## O3DE 3p package inventory, 2026-11-28 (Linux x86_64, tag 2610.0)
+
+Source: `cmake/3rdParty/Platform/Linux/BuiltInPackages_linux_x86_64.cmake` at tag 2610.0 (`ly_associate_package` entries). Only the package names and versions are verified here. Per-package licences are NOT audited yet: O3DE says they are logged in its 3P repository (https://github.com/o3de/3p-package-source) with SPDX tags, and its `LICENSE.txt` names only Qt as copyleft.
+
+Packages: RapidJSON 1.1.0, RapidXML 1.13, pybind11 2.10.0, glad 2.0.0-beta, xxhash 0.7.4, cityhash 1.1, expat 2.4.2, AWS Native SDK 1.11.288, tiff 4.2.0.15, freetype 2.11.1, Lua 5.4.4, mcpp 2.7.2_az.2, mikkelsen 1.0.0.4, googlebenchmark 1.7.0, qt 6.10.2, png 1.6.37, libsamplerate 0.2.1, openimageio-opencolorio 2.3.17, OpenEXR 3.1.3, OpenSSL 1.1.1t, DirectXShaderCompiler (Dxc) 1.8.2505.1, SPIRV-Cross 1.3.275.0, zlib 1.2.11, squish-ccr (deb557d), astc-encoder 3.2, ISPCTexComp (36b80aa), lz4 1.9.4, pyside6 6.10.2, SQLite 3.37.2, AWS IoT Device SDK C++ 1.15.2, Vulkan validation layers 1.2.198.
+
+Rule that follows for AK Engine: take nothing from this list into a release without checking that package's own licence file first. Qt and PySide6 stay out (editor UI toolkit, separate terms). Blender `lib` repo tree: still not audited.
