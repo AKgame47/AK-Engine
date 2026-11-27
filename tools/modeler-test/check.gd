@@ -29,5 +29,17 @@ func _initialize() -> void:
 	ok("cutout", side.size() > 0 and m.tri_count() == c0 - side.size(), str(side.size()))
 	var am: ArrayMesh = m.to_array_mesh()
 	ok("array_mesh", am.get_surface_count() == 1 and am.surface_get_array_len(0) == m.tri_count() * 3, str(am.get_surface_count()))
+	var mm = Ops.from_primitive(BoxMesh.new())
+	for i in mm.verts.size():
+		mm.verts[i] += Vector3(1, 0, 0)
+	var n_src: Vector3 = mm.tri_normal(0)
+	mm.mirror_x()
+	ok("mirror_counts", mm.verts.size() == 16 and mm.tri_count() == 24, "%d verts %d tris" % [mm.verts.size(), mm.tri_count()])
+	var n_mir: Vector3 = mm.tri_normal(12)
+	ok("mirror_winding", absf(n_mir.x + n_src.x) < 0.001 and absf(n_mir.y - n_src.y) < 0.001 and absf(n_mir.z - n_src.z) < 0.001, "%s vs %s" % [str(n_src), str(n_mir)])
+	var xmin: float = 99.0
+	for v in mm.verts:
+		xmin = minf(xmin, v.x)
+	ok("mirror_extent", absf(xmin + 1.5) < 0.001, str(xmin))
 	print("MODELER_TEST DONE")
 	quit()
