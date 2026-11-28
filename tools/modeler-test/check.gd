@@ -136,6 +136,27 @@ func _initialize() -> void:
 		if sm.tri_normal(t).dot(sm.tri_center(t)) < -0.0001:
 			sflip += 1
 	ok("smooth_winding_outward", sflip == 0, str(sflip))
+	var tb = Ops.from_primitive(BoxMesh.new())
+	tb.subdivide()
+	tb.subdivide()
+	var tl = Ops.from_primitive(BoxMesh.new())
+	tl.subdivide()
+	tl.subdivide()
+	var ta0: float = tb.area()
+	var tv0: int = tb.verts.size()
+	tb.taubin(4, 0.5, 0.53)
+	tl.smooth(8, 0.5)
+	ok("taubin_topology_kept", tb.verts.size() == tv0, str(tb.verts.size()))
+	ok("taubin_keeps_more_area_than_laplacian", tb.area() > tl.area() and tb.area() < ta0, "%f vs laplacian %f (start %f)" % [tb.area(), tl.area(), ta0])
+	var tflip: int = 0
+	for t in tb.tri_count():
+		if tb.tri_normal(t).dot(tb.tri_center(t)) < -0.0001:
+			tflip += 1
+	ok("taubin_winding_outward", tflip == 0, str(tflip))
+	var tcorner: float = 0.0
+	for v in tb.verts:
+		tcorner = maxf(tcorner, v.length())
+	ok("taubin_rounds_corners", tcorner < 0.8660, "max radius %f (box corner is 0.8660)" % tcorner)
 	var plug = load("res://addons/ak_modeler/plugin.gd")
 	ok("plugin_script_parses", plug != null and plug.can_instantiate(), "parse and compile only, UI not opened")
 	print("MODELER_TEST DONE")
