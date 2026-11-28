@@ -46,14 +46,14 @@ func _initialize() -> void:
 	body.subdivide()
 	body.subdivide()
 	var body_tris0: int = body.tri_count()
-	var n_hood: int = _panel(body, Vector3(1.35, 0.3, 0), Vector3(0.75, 0.05, 0.7), 0.15, 0.03)
-	var n_trunk: int = _panel(body, Vector3(-1.65, 0.3, 0), Vector3(0.5, 0.05, 0.7), 0.15, 0.03)
-	var n_door_l: int = _panel(body, Vector3(0.1, 0.0, 0.95), Vector3(0.55, 0.15, 0.05), 0.12, 0.03)
-	var n_door_r: int = _panel(body, Vector3(0.1, 0.0, -0.95), Vector3(0.55, 0.15, 0.05), 0.12, 0.03)
+	var n_hood: int = _panel(body, Vector3(1.1, 0.3, 0), Vector3(1.09, 0.01, 0.47), 0.12, 0.03)
+	var n_trunk: int = _panel(body, Vector3(-1.65, 0.3, 0), Vector3(0.54, 0.01, 0.47), 0.12, 0.03)
+	var n_door_l: int = _panel(body, Vector3(0.0, 0.0, 0.95), Vector3(1.09, 0.14, 0.01), 0.1, 0.03)
+	var n_door_r: int = _panel(body, Vector3(0.0, 0.0, -0.95), Vector3(1.09, 0.14, 0.01), 0.1, 0.03)
 	var n_arch := 0
-	for wx in [1.4, -1.4]:
+	for wx in [1.65, -1.65]:
 		for sz in [0.95, -0.95]:
-			n_arch += _panel(body, Vector3(wx, -0.12, sz), Vector3(0.4, 0.17, 0.05), 0.1, 0.1)
+			n_arch += _panel(body, Vector3(wx, -0.15, sz), Vector3(0.54, 0.14, 0.01), 0.1, 0.1)
 	_shift(body, Vector3(0, 0.55, 0))
 	var paint := _mat(Color(0.62, 0.05, 0.07), 0.6, 0.28)
 	_node("Body", body, paint, car)
@@ -68,7 +68,7 @@ func _initialize() -> void:
 	var roof: PackedInt32Array = cab.select_by_aabb(AABB(Vector3(-2, 0.2, -1), Vector3(4, 0.1, 2)))
 	cab.region_inset(roof, 0.28)
 	cab.extrude(roof, 0.06)
-	_shift(cab, Vector3(-0.3, 1.3, 0))
+	_shift(cab, Vector3(-0.3, 1.075, 0))
 	var glass := _mat(Color(0.08, 0.1, 0.13), 0.3, 0.1)
 	_node("Cabin", cab, glass, car)
 	ok("cabin_roof_sel", roof.size() > 0, str(roof.size()))
@@ -76,7 +76,7 @@ func _initialize() -> void:
 	# wheels: cylinder primitive through the modeler (rotated to lie across Z)
 	var tire := _mat(Color(0.03, 0.03, 0.035), 0.0, 0.85)
 	var wheels := 0
-	for wx in [1.4, -1.4]:
+	for wx in [1.65, -1.65]:
 		for sz in [0.9, -0.9]:
 			var cyl := CylinderMesh.new()
 			cyl.top_radius = 0.36
