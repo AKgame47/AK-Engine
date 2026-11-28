@@ -115,6 +115,13 @@ func _initialize() -> void:
 		if xm.tri_normal(t).dot(xm.tri_center(t)) < -0.0001:
 			xflip += 1
 	ok("extrude_winding_outward", xflip == 0, str(xflip))
+	var vm = Ops.from_primitive(BoxMesh.new())
+	var moved: int = vm.move_verts(AABB(Vector3(-1, 0.4, -1), Vector3(2, 1, 2)), Vector3(0, -0.2, 0))
+	ok("move_verts_count", moved == 4, str(moved))
+	var vtop: float = -9.0
+	for v in vm.verts:
+		vtop = maxf(vtop, v.y)
+	ok("move_verts_height", absf(vtop - 0.3) < 0.0001, str(vtop))
 	var plug = load("res://addons/ak_modeler/plugin.gd")
 	ok("plugin_script_parses", plug != null and plug.can_instantiate(), "parse and compile only, UI not opened")
 	print("MODELER_TEST DONE")
