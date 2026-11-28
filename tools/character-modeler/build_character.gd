@@ -61,17 +61,17 @@ func _initialize() -> void:
 	sp0.rings = 14
 	var chestm = Ops.from_primitive(sp0)
 	for i in chestm.verts.size():
-		chestm.verts[i] *= Vector3(0.27, 0.3, 0.17)
-	_shift(chestm, Vector3(0, 1.3, 0))
+		chestm.verts[i] *= Vector3(0.27, 0.23, 0.15)
+	_shift(chestm, Vector3(0, 1.37, 0))
 	_node("Chest", chestm, shirt, ch)
-	var waist = _box(Ops, Vector3(0.40, 0.4, 0.24), Vector3.ZERO, shirt, "Waist", ch)
+	var waist = _box(Ops, Vector3(0.34, 0.46, 0.22), Vector3.ZERO, shirt, "Waist", ch)
 	var t1: int = waist.move_verts(AABB(Vector3(0.15, -0.3, -0.3), Vector3(0.2, 0.15, 0.6)), Vector3(-0.04, 0, 0))
 	var t2: int = waist.move_verts(AABB(Vector3(-0.35, -0.3, -0.3), Vector3(0.2, 0.15, 0.6)), Vector3(0.04, 0, 0))
 	var hem: PackedInt32Array = waist.select_by_aabb(AABB(Vector3(-0.2, -0.2, 0.11), Vector3(0.4, 0.1, 0.02)))
 	if hem.size() > 0:
 		waist.bevel_face(hem, 0.1, 0.012)
 	waist.smooth(2, 0.4)
-	_shift(waist, Vector3(0, 1.0, 0))
+	_shift(waist, Vector3(0, 1.12, 0))
 	_node("Waist", waist, shirt, ch)
 	ok("torso_ops", t1 > 0 and t2 > 0, "taper %d/%d hem %d" % [t1, t2, hem.size()])
 
