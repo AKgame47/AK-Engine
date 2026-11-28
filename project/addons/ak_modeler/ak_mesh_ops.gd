@@ -332,6 +332,15 @@ func smooth(iterations: int, lam: float) -> void:
 			np[i] = verts[i].lerp(avg, lam)
 		verts = np
 
+func taubin(iterations: int, lam: float, mu: float) -> void:
+	# Taubin (lambda|mu) smoothing: a shrink step (lam) then an inflate step (-mu), repeated.
+	# Rounds corners and hard edges like a smooth bevel while keeping volume close to the original,
+	# unlike smooth() which shrinks. Typical values: lam 0.5, mu 0.53. Topology and winding unchanged.
+	# Status: PLANNED until a render shows the gain. Not an edge-selective bevel with segments.
+	for it in iterations:
+		smooth(1, lam)
+		smooth(1, -mu)
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
