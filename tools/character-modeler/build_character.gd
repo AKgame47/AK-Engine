@@ -53,50 +53,57 @@ func _initialize() -> void:
 	var hair := _mat(Color(0.08, 0.05, 0.03), 0.0, 0.6)
 	var dark := _mat(Color(0.02, 0.02, 0.03), 0.0, 0.4)
 
-	# torso: box tapered toward the waist with move_verts, chest panel with bevel_face
-	var torso = _box(Ops, Vector3(0.5, 0.65, 0.28), Vector3.ZERO, shirt, "Torso", ch)
-	var t1: int = torso.move_verts(AABB(Vector3(0.2, -0.4, -0.3), Vector3(0.2, 0.15, 0.6)), Vector3(-0.07, 0, 0))
-	var t2: int = torso.move_verts(AABB(Vector3(-0.4, -0.4, -0.3), Vector3(0.2, 0.15, 0.6)), Vector3(0.07, 0, 0))
-	var chest: PackedInt32Array = torso.select_by_aabb(AABB(Vector3(-0.24, 0.01, 0.13), Vector3(0.48, 0.3, 0.02)))
-	if chest.size() > 0:
-		torso.bevel_face(chest, 0.15, 0.02)
-	_shift(torso, Vector3(0, 1.2, 0))
-	_node("Torso", torso, shirt, ch)
-	ok("torso_ops", t1 > 0 and t2 > 0 and chest.size() > 0, "taper %d/%d chest %d" % [t1, t2, chest.size()])
+	# torso: ellipsoid chest (sphere primitive scaled) plus a waist box; collar and hem panels via bevel_face
+	var sp0 := SphereMesh.new()
+	sp0.radius = 1.0
+	sp0.height = 2.0
+	sp0.radial_segments = 28
+	sp0.rings = 14
+	var chestm = Ops.from_primitive(sp0)
+	for i in chestm.verts.size():
+		chestm.verts[i] *= Vector3(0.27, 0.3, 0.17)
+	_shift(chestm, Vector3(0, 1.3, 0))
+	_node("Chest", chestm, shirt, ch)
+	var waist = _box(Ops, Vector3(0.40, 0.4, 0.24), Vector3.ZERO, shirt, "Waist", ch)
+	var t1: int = waist.move_verts(AABB(Vector3(0.15, -0.3, -0.3), Vector3(0.2, 0.15, 0.6)), Vector3(-0.04, 0, 0))
+	var t2: int = waist.move_verts(AABB(Vector3(-0.35, -0.3, -0.3), Vector3(0.2, 0.15, 0.6)), Vector3(0.04, 0, 0))
+	var hem: PackedInt32Array = waist.select_by_aabb(AABB(Vector3(-0.2, -0.2, 0.11), Vector3(0.4, 0.1, 0.02)))
+	if hem.size() > 0:
+		waist.bevel_face(hem, 0.1, 0.012)
+	_shift(waist, Vector3(0, 1.0, 0))
+	_node("Waist", waist, shirt, ch)
+	ok("torso_ops", t1 > 0 and t2 > 0, "taper %d/%d hem %d" % [t1, t2, hem.size()])
 
-	var pelvis = _box(Ops, Vector3(0.46, 0.22, 0.26), Vector3.ZERO, pants, "Pelvis", ch)
+	var pelvis = _box(Ops, Vector3(0.44, 0.22, 0.25), Vector3.ZERO, pants, "Pelvis", ch)
 	_shift(pelvis, Vector3(0, 0.8, 0))
 	_node("Pelvis", pelvis, pants, ch)
 
-	# limbs from cylinders
+	# limbs: upper and lower segments with joint spheres
 	for sx in [1.0, -1.0]:
-		var lc := CylinderMesh.new()
-		lc.top_radius = 0.095
-		lc.bottom_radius = 0.075
-		lc.height = 0.8
-		lc.radial_segments = 20
-		var leg = Ops.from_primitive(lc)
-		_shift(leg, Vector3(0.12 * sx, 0.4, 0))
-		_node("Leg%d" % int(sx), leg, pants, ch)
+		var jl := [["Thigh", 0.095, 0.08, 0.4, Vector3(0.12 * sx, 0.6, 0), pants], ["Shin", 0.075, 0.06, 0.4, Vector3(0.12 * sx, 0.2, 0), pants],
+			["UpperArm", 0.065, 0.058, 0.3, Vector3(0.35 * sx, 1.25, 0), shirt], ["Forearm", 0.055, 0.045, 0.28, Vector3(0.35 * sx, 0.96, 0), shirt]]
+		for j in jl:
+			var lc := CylinderMesh.new()
+			lc.top_radius = j[1]
+			lc.bottom_radius = j[2]
+			lc.height = j[3]
+			lc.radial_segments = 20
+			var seg = Ops.from_primitive(lc)
+			_shift(seg, j[4])
+			_node("%s%d" % [j[0], int(sx)], seg, j[5], ch)
+		var joints := [["Shoulder", 0.075, Vector3(0.34 * sx, 1.4, 0), shirt], ["Elbow", 0.055, Vector3(0.35 * sx, 1.1, 0), shirt], ["Knee", 0.078, Vector3(0.12 * sx, 0.4, 0), pants], ["Hand", 0.055, Vector3(0.35 * sx, 0.8, 0), skin]]
+		for jt in joints:
+			var hs := SphereMesh.new()
+			hs.radius = jt[1]
+			hs.height = jt[1] * 2.0
+			hs.radial_segments = 16
+			hs.rings = 8
+			var jo = Ops.from_primitive(hs)
+			_shift(jo, jt[2])
+			_node("%s%d" % [jt[0], int(sx)], jo, jt[3], ch)
 		var ft = _box(Ops, Vector3(0.15, 0.08, 0.3), Vector3.ZERO, shoe, "Shoe", ch)
 		_shift(ft, Vector3(0.12 * sx, 0.04, 0.07))
 		_node("Shoe%d" % int(sx), ft, shoe, ch)
-		var ac := CylinderMesh.new()
-		ac.top_radius = 0.065
-		ac.bottom_radius = 0.055
-		ac.height = 0.62
-		ac.radial_segments = 20
-		var arm = Ops.from_primitive(ac)
-		_shift(arm, Vector3(0.34 * sx, 1.22, 0))
-		_node("Arm%d" % int(sx), arm, shirt, ch)
-		var hs := SphereMesh.new()
-		hs.radius = 0.06
-		hs.height = 0.12
-		hs.radial_segments = 16
-		hs.rings = 8
-		var hand = Ops.from_primitive(hs)
-		_shift(hand, Vector3(0.34 * sx, 0.87, 0))
-		_node("Hand%d" % int(sx), hand, skin, ch)
 
 	# neck and head
 	var nc := CylinderMesh.new()
@@ -120,8 +127,8 @@ func _initialize() -> void:
 	var hr = Ops.from_primitive(sp)
 	for i in hr.verts.size():
 		hr.verts[i] *= Vector3(0.112, 0.138, 0.122)
-	var lowhair: PackedInt32Array = hr.select_by_aabb(AABB(Vector3(-0.2, -0.2, -0.2), Vector3(0.4, 0.17, 0.4)))
-	var face_side: PackedInt32Array = hr.select_by_aabb(AABB(Vector3(-0.2, -0.03, 0.05), Vector3(0.4, 0.3, 0.2)))
+	var lowhair: PackedInt32Array = hr.select_by_aabb(AABB(Vector3(-0.2, -0.2, -0.2), Vector3(0.4, 0.15, 0.4)))
+	var face_side: PackedInt32Array = hr.select_by_aabb(AABB(Vector3(-0.2, -0.05, 0.075), Vector3(0.4, 0.1, 0.2)))
 	var drop := PackedInt32Array()
 	for t in lowhair:
 		drop.append(t)
@@ -150,7 +157,7 @@ func _initialize() -> void:
 	var total := 0
 	for c in ch.get_children():
 		total += (c as MeshInstance3D).mesh.get_faces().size() / 3
-	ok("parts", part_count >= 15, str(part_count))
+	ok("parts", part_count >= 25, str(part_count))
 	ok("char_tris", total > 3000, str(total))
 	var car := ch
 
