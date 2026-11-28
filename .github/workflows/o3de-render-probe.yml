@@ -94,7 +94,7 @@ jobs:
           true
           echo "AP_EXIT $RC"; tail -25 $GITHUB_WORKSPACE/ap.log | cut -c1-240
           echo "---- GameLauncher"
-          Xvfb :99 -screen 0 1920x1080x24 &
+          Xvfb :99 -screen 0 640x360x24 &
           sleep 3
           export DISPLAY=:99
           echo '---- level products'; find $E/AutomatedTesting/Cache -iname '*hermanubis*' 2>/dev/null | head -20; find $E/AutomatedTesting/Cache -iname '*.spawnable' 2>/dev/null | grep -i level | head -20; ls $E/AutomatedTesting/user/log 2>&1 | head
