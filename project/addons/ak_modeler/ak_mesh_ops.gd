@@ -259,6 +259,43 @@ func inset(sel: PackedInt32Array, k: float) -> void:
 		out.append_array(PackedInt32Array([c, a, ia, c, ia, ic]))
 	tris = out
 
+func region_inset(sel: PackedInt32Array, k: float) -> void:
+	# Inset a connected region of triangles toward the region centre by factor k (0..1).
+	# Only the region's boundary edges get a border strip, so interior seams stay intact.
+	var edge_count := {}
+	var ctr := Vector3.ZERO
+	var seen := {}
+	for t in sel:
+		for e in 3:
+			var a := tris[t * 3 + e]
+			var b := tris[t * 3 + (e + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			edge_count[key] = int(edge_count.get(key, 0)) + 1
+			if not seen.has(a):
+				seen[a] = true
+				ctr += verts[a]
+	ctr /= float(seen.size())
+	var dup := {}
+	for vi in seen.keys():
+		dup[vi] = verts.size()
+		verts.append(verts[vi].lerp(ctr, k))
+	for t in sel:
+		for e in 3:
+			var a := tris[t * 3 + e]
+			var b := tris[t * 3 + (e + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			if edge_count[key] == 1:
+				tris.append_array(PackedInt32Array([a, dup[a], dup[b], a, dup[b], b]))
+	for t in sel:
+		for e in 3:
+			tris[t * 3 + e] = dup[tris[t * 3 + e]]
+
+func bevel_face(sel: PackedInt32Array, k: float, depth: float) -> void:
+	# Face bevel: inset the region by k, then push the inner region by -depth along its normal.
+	# This is a face-border chamfer (stepped). It is NOT a smooth edge bevel with segments.
+	region_inset(sel, k)
+	extrude(sel, -depth)
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
