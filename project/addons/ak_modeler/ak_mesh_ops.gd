@@ -306,6 +306,32 @@ func move_verts(box: AABB, delta: Vector3) -> int:
 			n += 1
 	return n
 
+func smooth(iterations: int, lam: float) -> void:
+	# Laplacian smoothing: move each vertex toward the average of its edge neighbours by lam (0..1).
+	# Rounds hard forms (shrinks them slightly). Topology and winding are unchanged.
+	var nb := []
+	nb.resize(verts.size())
+	for i in verts.size():
+		nb[i] = {}
+	for t in tri_count():
+		for e in 3:
+			var a := tris[t * 3 + e]
+			var b := tris[t * 3 + (e + 1) % 3]
+			nb[a][b] = true
+			nb[b][a] = true
+	for it in iterations:
+		var np := verts.duplicate()
+		for i in verts.size():
+			var keys: Array = nb[i].keys()
+			if keys.size() == 0:
+				continue
+			var avg := Vector3.ZERO
+			for k in keys:
+				avg += verts[k]
+			avg /= float(keys.size())
+			np[i] = verts[i].lerp(avg, lam)
+		verts = np
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
