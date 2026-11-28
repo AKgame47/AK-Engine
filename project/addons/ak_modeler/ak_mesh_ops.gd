@@ -285,7 +285,7 @@ func region_inset(sel: PackedInt32Array, k: float) -> void:
 			var b := tris[t * 3 + (e + 1) % 3]
 			var key := Vector2i(mini(a, b), maxi(a, b))
 			if edge_count[key] == 1:
-				tris.append_array(PackedInt32Array([a, dup[a], dup[b], a, dup[b], b]))
+				tris.append_array(PackedInt32Array([a, b, dup[b], a, dup[b], dup[a]]))
 	for t in sel:
 		for e in 3:
 			tris[t * 3 + e] = dup[tris[t * 3 + e]]
