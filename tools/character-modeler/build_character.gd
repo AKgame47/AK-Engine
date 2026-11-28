@@ -70,13 +70,13 @@ func _initialize() -> void:
 	var hem: PackedInt32Array = waist.select_by_aabb(AABB(Vector3(-0.2, -0.2, 0.11), Vector3(0.4, 0.1, 0.02)))
 	if hem.size() > 0:
 		waist.bevel_face(hem, 0.1, 0.012)
-	waist.smooth(2, 0.4)
+	waist.taubin(4, 0.5, 0.53)
 	_shift(waist, Vector3(0, 1.12, 0))
 	_node("Waist", waist, shirt, ch)
 	ok("torso_ops", t1 > 0 and t2 > 0, "taper %d/%d hem %d" % [t1, t2, hem.size()])
 
 	var pelvis = _box(Ops, Vector3(0.50, 0.24, 0.27), Vector3.ZERO, pants, "Pelvis", ch, 3)
-	pelvis.smooth(3, 0.5)
+	pelvis.taubin(6, 0.5, 0.53)
 	_shift(pelvis, Vector3(0, 0.8, 0))
 	_node("Pelvis", pelvis, pants, ch)
 
