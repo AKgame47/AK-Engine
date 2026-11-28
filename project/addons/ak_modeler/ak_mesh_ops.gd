@@ -296,6 +296,16 @@ func bevel_face(sel: PackedInt32Array, k: float, depth: float) -> void:
 	region_inset(sel, k)
 	extrude(sel, -depth)
 
+func move_verts(box: AABB, delta: Vector3) -> int:
+	# Move every vertex whose position is inside box by delta. Returns how many moved.
+	# Use it to slope or taper a part (windshield, nose). Winding is unchanged.
+	var n := 0
+	for i in verts.size():
+		if box.has_point(verts[i]):
+			verts[i] += delta
+			n += 1
+	return n
+
 func to_array_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
