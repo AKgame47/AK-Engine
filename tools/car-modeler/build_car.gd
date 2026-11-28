@@ -99,6 +99,8 @@ func _initialize() -> void:
 	var bits := [["HeadL", Vector3(0.28, 0.16, 0.4), Vector3(2.2, 0.62, 0.62), lamp_m], ["HeadR", Vector3(0.28, 0.16, 0.4), Vector3(2.2, 0.62, -0.62), lamp_m],
 		["TailL", Vector3(0.2, 0.14, 0.45), Vector3(-2.2, 0.68, 0.62), tail_m], ["TailR", Vector3(0.2, 0.14, 0.45), Vector3(-2.2, 0.68, -0.62), tail_m],
 		["Grille", Vector3(0.12, 0.2, 0.7), Vector3(2.23, 0.56, 0), dark], ["BumperF", Vector3(0.22, 0.16, 1.95), Vector3(2.25, 0.36, 0), dark], ["BumperR", Vector3(0.22, 0.16, 1.95), Vector3(-2.25, 0.36, 0), dark],
+		["SeamL1", Vector3(0.025, 0.3, 0.02), Vector3(-0.55, 0.7, 0.96), dark], ["SeamL2", Vector3(0.025, 0.3, 0.02), Vector3(0.6, 0.7, 0.96), dark], ["SeamL3", Vector3(0.025, 0.3, 0.02), Vector3(-1.2, 0.7, 0.96), dark],
+		["SeamR1", Vector3(0.025, 0.3, 0.02), Vector3(-0.55, 0.7, -0.96), dark], ["SeamR2", Vector3(0.025, 0.3, 0.02), Vector3(0.6, 0.7, -0.96), dark], ["SeamR3", Vector3(0.025, 0.3, 0.02), Vector3(-1.2, 0.7, -0.96), dark],
 		["MirrorL", Vector3(0.14, 0.1, 0.2), Vector3(0.75, 1.0, 0.93), dark], ["MirrorR", Vector3(0.14, 0.1, 0.2), Vector3(0.75, 1.0, -0.93), dark]]
 	for bp in bits:
 		var bo = Ops.from_primitive(BoxMesh.new())
