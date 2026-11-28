@@ -70,11 +70,13 @@ func _initialize() -> void:
 	var hem: PackedInt32Array = waist.select_by_aabb(AABB(Vector3(-0.2, -0.2, 0.11), Vector3(0.4, 0.1, 0.02)))
 	if hem.size() > 0:
 		waist.bevel_face(hem, 0.1, 0.012)
+	waist.smooth(2, 0.4)
 	_shift(waist, Vector3(0, 1.0, 0))
 	_node("Waist", waist, shirt, ch)
 	ok("torso_ops", t1 > 0 and t2 > 0, "taper %d/%d hem %d" % [t1, t2, hem.size()])
 
-	var pelvis = _box(Ops, Vector3(0.44, 0.22, 0.25), Vector3.ZERO, pants, "Pelvis", ch)
+	var pelvis = _box(Ops, Vector3(0.50, 0.24, 0.27), Vector3.ZERO, pants, "Pelvis", ch, 3)
+	pelvis.smooth(3, 0.5)
 	_shift(pelvis, Vector3(0, 0.8, 0))
 	_node("Pelvis", pelvis, pants, ch)
 
@@ -101,7 +103,8 @@ func _initialize() -> void:
 			var jo = Ops.from_primitive(hs)
 			_shift(jo, jt[2])
 			_node("%s%d" % [jt[0], int(sx)], jo, jt[3], ch)
-		var ft = _box(Ops, Vector3(0.15, 0.08, 0.3), Vector3.ZERO, shoe, "Shoe", ch)
+		var ft = _box(Ops, Vector3(0.15, 0.08, 0.3), Vector3.ZERO, shoe, "Shoe", ch, 2)
+		ft.smooth(2, 0.45)
 		_shift(ft, Vector3(0.12 * sx, 0.04, 0.07))
 		_node("Shoe%d" % int(sx), ft, shoe, ch)
 
