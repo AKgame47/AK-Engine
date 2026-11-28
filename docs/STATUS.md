@@ -1,6 +1,26 @@
-# Status (updated 2026-11-27, 05:30 IST)
+# Status (updated 2026-11-28, 17:00 IST)
 
 Every "Implemented" row has a link to the CI run, release or file that shows it. Everything else is not done.
+
+## Sprint snapshot, 28 Nov 2026 (supersedes older wording below where they differ)
+
+Only items with a release or file link are claimed.
+
+| Item | State | Evidence |
+|---|---|---|
+| Modeler mesh ops (subdivide, select, extrude, cutout, mirror_x, weld, cut_plane, pick_tri, inset, region_inset, bevel_face, move_verts, smooth, taubin) | Experimental. Headless test passes, 40 CHECKs, 0 fail. Dock UI and click picking UNTESTED beyond compile. bevel_face is a stepped chamfer (smooth bevel PLANNED). taubin: implemented and unit-tested, small visual gain only. | https://github.com/AKgame47/AK-Engine/releases/tag/modeler-test-run14 |
+| Car built from modeler ops | Implemented, passes 12 CHECKs. STYLIZED, low-poly, not detailed or hyperreal. | https://github.com/AKgame47/AK-Engine/releases/tag/car-modeler-run10 |
+| Character built from modeler ops | Implemented, passes 10 CHECKs. STYLIZED mannequin, not detailed. | https://github.com/AKgame47/AK-Engine/releases/tag/character-modeler-run7 |
+| Phase 2 acceptance (detailed car and character from own tools) | NOT met. Partial. | see above |
+| O3DE render | NOT reached (M5). Run 19 (640x360 software Vulkan) produced no render: blank screenshots, main thread in Atom command flush. Software Vulkan is the likely bottleneck, not proven. Godot fallback stays. | https://github.com/AKgame47/AK-Engine/releases/tag/o3de-render-probe-run19 |
+| Free Colab T4 for Vulkan | Failed. vulkaninfo "Found no drivers"; the NVIDIA GL library never opens /dev/nvidia*, no /dev/dri. Tested 12:51 and 15:52 IST. | this file |
+| Kaggle GPU probe | Not started. Needs a phone-verified account. | this file |
+| Renderer interface | PLANNED, doc only | docs/RENDERER-INTERFACE.md |
+
+Phase status: 0 docs done, dependency audit open. 1 mostly done (open: build docs, binary name, stock UI layout). 2 partial. 3 not reached. 4 to 7 not started.
+
+Next: modeler dock UI test in a real editor run, smooth edge bevel, shaped shoulders and limb blends, Kaggle probe when an account is available, real-GPU Vulkan test for Phase 3.
+
 
 | Item | State | Evidence |
 |---|---|---|
