@@ -123,10 +123,11 @@ func _initialize() -> void:
 	# neck and head
 	var nc := CylinderMesh.new()
 	nc.top_radius = 0.05
-	nc.bottom_radius = 0.055
-	nc.height = 0.12
+	nc.bottom_radius = 0.09
+	nc.height = 0.17
 	var neck = Ops.from_primitive(nc)
-	_shift(neck, Vector3(0, 1.58, 0))
+	neck.smooth(1, 0.3)
+	_shift(neck, Vector3(0, 1.56, 0))
 	_node("Neck", neck, skin, ch)
 	var sp := SphereMesh.new()
 	sp.radius = 1.0
