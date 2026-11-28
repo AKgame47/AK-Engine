@@ -122,6 +122,20 @@ func _initialize() -> void:
 	for v in vm.verts:
 		vtop = maxf(vtop, v.y)
 	ok("move_verts_height", absf(vtop - 0.3) < 0.0001, str(vtop))
+	var sm = Ops.from_primitive(BoxMesh.new())
+	sm.subdivide()
+	sm.subdivide()
+	var sv0: int = sm.verts.size()
+	var st0: int = sm.tri_count()
+	var sa0: float = sm.area()
+	sm.smooth(3, 0.5)
+	ok("smooth_topology_kept", sm.verts.size() == sv0 and sm.tri_count() == st0, "%d verts %d tris" % [sm.verts.size(), sm.tri_count()])
+	ok("smooth_area_shrinks", sm.area() < sa0 and sm.area() > sa0 * 0.5, "%f -> %f" % [sa0, sm.area()])
+	var sflip: int = 0
+	for t in sm.tri_count():
+		if sm.tri_normal(t).dot(sm.tri_center(t)) < -0.0001:
+			sflip += 1
+	ok("smooth_winding_outward", sflip == 0, str(sflip))
 	var plug = load("res://addons/ak_modeler/plugin.gd")
 	ok("plugin_script_parses", plug != null and plug.can_instantiate(), "parse and compile only, UI not opened")
 	print("MODELER_TEST DONE")
