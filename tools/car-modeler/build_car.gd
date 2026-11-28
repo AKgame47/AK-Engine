@@ -56,6 +56,7 @@ func _initialize() -> void:
 			n_arch += _panel(body, Vector3(wx, -0.15, sz), Vector3(0.54, 0.14, 0.01), 0.1, 0.1)
 	var nose: int = body.move_verts(AABB(Vector3(1.6, 0.2, -1), Vector3(1.0, 0.2, 2)), Vector3(0, -0.14, 0))
 	var tail: int = body.move_verts(AABB(Vector3(-2.6, 0.2, -1), Vector3(1.0, 0.2, 2)), Vector3(0, -0.1, 0))
+	body.smooth(2, 0.3)
 	_shift(body, Vector3(0, 0.55, 0))
 	var paint := _mat(Color(0.62, 0.05, 0.07), 0.6, 0.28)
 	_node("Body", body, paint, car)
