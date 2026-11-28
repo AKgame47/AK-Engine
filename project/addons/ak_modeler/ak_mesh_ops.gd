@@ -106,8 +106,8 @@ func extrude(sel: PackedInt32Array, dist: float) -> void:
 			var b := tris[t * 3 + (e + 1) % 3]
 			var key := Vector2i(mini(a, b), maxi(a, b))
 			if edge_count[key] == 1:
-				# side wall quad a, b, b', a' with the same winding as the cap
-				tris.append_array(PackedInt32Array([a, dup[a], dup[b], a, dup[b], b]))
+				# side wall quad a, b, b', a' wound so the wall faces away from the region (fixed after render evidence)
+				tris.append_array(PackedInt32Array([a, b, dup[b], a, dup[b], dup[a]]))
 	# move the cap itself
 	for t in sel:
 		for e in 3:
