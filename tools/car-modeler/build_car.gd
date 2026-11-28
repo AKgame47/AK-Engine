@@ -34,6 +34,14 @@ func _node(name: String, o, mat: Material, parent: Node3D) -> MeshInstance3D:
 	mi.owner = parent.owner if parent.owner else parent
 	return mi
 
+func _box(Ops, size: Vector3, _pos: Vector3, _mat_unused, _name: String, _parent, subs := 1):
+	var o = Ops.from_primitive(BoxMesh.new())
+	for i in o.verts.size():
+		o.verts[i] *= size
+	for k in subs:
+		o.subdivide()
+	return o
+
 func _initialize() -> void:
 	var Ops = load("res://addons/ak_modeler/ak_mesh_ops.gd")
 	var car := Node3D.new()
