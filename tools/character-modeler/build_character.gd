@@ -103,6 +103,18 @@ func _initialize() -> void:
 			var jo = Ops.from_primitive(hs)
 			_shift(jo, jt[2])
 			_node("%s%d" % [jt[0], int(sx)], jo, jt[3], ch)
+		# hands: palm block plus four fingers and a thumb, built with the same box primitive
+		var palm = _box(Ops, Vector3(0.07, 0.1, 0.045), Vector3.ZERO, skin, "Palm", ch, 1)
+		palm.smooth(1, 0.3)
+		_shift(palm, Vector3(0.35 * sx, 0.73, 0))
+		_node("Palm%d" % int(sx), palm, skin, ch)
+		for fi in 4:
+			var fg = _box(Ops, Vector3(0.016, 0.07, 0.016), Vector3.ZERO, skin, "Finger", ch, 1)
+			_shift(fg, Vector3(0.35 * sx, 0.65, -0.0165 * 1.5 + 0.0165 * fi))
+			_node("Finger%d_%d" % [int(sx), fi], fg, skin, ch)
+		var th = _box(Ops, Vector3(0.016, 0.055, 0.016), Vector3.ZERO, skin, "Thumb", ch, 1)
+		_shift(th, Vector3(0.35 * sx + 0.045 * sx, 0.73, 0.0))
+		_node("Thumb%d" % int(sx), th, skin, ch)
 		var ft = _box(Ops, Vector3(0.15, 0.08, 0.3), Vector3.ZERO, shoe, "Shoe", ch, 2)
 		ft.smooth(2, 0.45)
 		_shift(ft, Vector3(0.12 * sx, 0.04, 0.07))
