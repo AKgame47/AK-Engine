@@ -85,14 +85,14 @@ func _initialize() -> void:
 			iflip += 1
 	ok("inset_winding_outward", iflip == 0, str(iflip))
 	var rm = Ops.from_primitive(BoxMesh.new())
-	var top: PackedInt32Array = rm.select_by_aabb(AABB(Vector3(-1, 0.4, -1), Vector3(2, 1, 2)))
-	ok("region_top_sel", top.size() == 2, str(top.size()))
+	var rtop: PackedInt32Array = rm.select_by_aabb(AABB(Vector3(-1, 0.4, -1), Vector3(2, 1, 2)))
+	ok("region_top_sel", rtop.size() == 2, str(rtop.size()))
 	var rt0: int = rm.tri_count()
 	var rv0: int = rm.verts.size()
-	rm.region_inset(top, 0.25)
+	rm.region_inset(rtop, 0.25)
 	ok("region_inset_counts", rm.tri_count() == rt0 + 8 and rm.verts.size() == rv0 + 4, "%d tris %d verts" % [rm.tri_count(), rm.verts.size()])
 	var cap_up: int = 0
-	for t in top:
+	for t in rtop:
 		if rm.tri_normal(t).y > 0.9:
 			cap_up += 1
 	ok("region_inset_cap_up", cap_up == 2, str(cap_up))
@@ -107,5 +107,7 @@ func _initialize() -> void:
 	var inner_y: float = bm.tri_center(btop[0]).y
 	ok("bevel_face_depth", absf(inner_y - 0.4) < 0.0001, "inner y %f" % inner_y)
 	ok("bevel_face_counts", bm.tri_count() == 12 + 8 + 8 and bm.verts.size() == 8 + 4 + 4, "%d tris %d verts" % [bm.tri_count(), bm.verts.size()])
+	var plug = load("res://addons/ak_modeler/plugin.gd")
+	ok("plugin_script_parses", plug != null and plug.can_instantiate(), "parse and compile only, UI not opened")
 	print("MODELER_TEST DONE")
 	quit()
