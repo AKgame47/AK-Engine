@@ -54,6 +54,8 @@ func _initialize() -> void:
 	for wx in [1.65, -1.65]:
 		for sz in [0.95, -0.95]:
 			n_arch += _panel(body, Vector3(wx, -0.15, sz), Vector3(0.54, 0.14, 0.01), 0.1, 0.1)
+	var nose: int = body.move_verts(AABB(Vector3(1.6, 0.2, -1), Vector3(1.0, 0.2, 2)), Vector3(0, -0.14, 0))
+	var tail: int = body.move_verts(AABB(Vector3(-2.6, 0.2, -1), Vector3(1.0, 0.2, 2)), Vector3(0, -0.1, 0))
 	_shift(body, Vector3(0, 0.55, 0))
 	var paint := _mat(Color(0.62, 0.05, 0.07), 0.6, 0.28)
 	_node("Body", body, paint, car)
@@ -65,6 +67,8 @@ func _initialize() -> void:
 	for i in cab.verts.size():
 		cab.verts[i] *= Vector3(2.3, 0.45, 1.7)
 	cab.subdivide()
+	var wind: int = cab.move_verts(AABB(Vector3(1.0, 0.2, -1), Vector3(0.5, 0.1, 2)), Vector3(-0.55, 0, 0))
+	var rear: int = cab.move_verts(AABB(Vector3(-1.5, 0.2, -1), Vector3(0.5, 0.1, 2)), Vector3(0.45, 0, 0))
 	var roof: PackedInt32Array = cab.select_by_aabb(AABB(Vector3(-2, 0.2, -1), Vector3(4, 0.1, 2)))
 	cab.region_inset(roof, 0.28)
 	cab.extrude(roof, 0.06)
@@ -72,6 +76,28 @@ func _initialize() -> void:
 	var glass := _mat(Color(0.08, 0.1, 0.13), 0.3, 0.1)
 	_node("Cabin", cab, glass, car)
 	ok("cabin_roof_sel", roof.size() > 0, str(roof.size()))
+	ok("slopes_moved", nose > 0 and tail > 0 and wind > 0 and rear > 0, "nose %d tail %d windshield %d rear %d" % [nose, tail, wind, rear])
+
+	# lights, bumpers, grille (small boxes built by the same box primitive and ops)
+	var lamp_m := _mat(Color(1.0, 0.96, 0.8), 0.0, 0.2)
+	lamp_m.emission_enabled = true
+	lamp_m.emission = Color(1.0, 0.95, 0.75)
+	var tail_m := _mat(Color(0.9, 0.0, 0.0), 0.0, 0.3)
+	tail_m.emission_enabled = true
+	tail_m.emission = Color(0.7, 0.0, 0.0)
+	var dark := _mat(Color(0.05, 0.05, 0.06), 0.4, 0.5)
+	var bits := [["HeadL", Vector3(0.28, 0.16, 0.4), Vector3(2.2, 0.62, 0.62), lamp_m], ["HeadR", Vector3(0.28, 0.16, 0.4), Vector3(2.2, 0.62, -0.62), lamp_m],
+		["TailL", Vector3(0.2, 0.14, 0.45), Vector3(-2.2, 0.68, 0.62), tail_m], ["TailR", Vector3(0.2, 0.14, 0.45), Vector3(-2.2, 0.68, -0.62), tail_m],
+		["Grille", Vector3(0.12, 0.2, 0.7), Vector3(2.23, 0.56, 0), dark], ["BumperF", Vector3(0.22, 0.16, 1.95), Vector3(2.25, 0.36, 0), dark], ["BumperR", Vector3(0.22, 0.16, 1.95), Vector3(-2.25, 0.36, 0), dark]]
+	for bp in bits:
+		var bo = Ops.from_primitive(BoxMesh.new())
+		for i in bo.verts.size():
+			bo.verts[i] *= bp[1]
+		bo.subdivide()
+		_shift(bo, bp[2])
+		var bn := _node(bp[0], bo, bp[3], car)
+		bn.name = bp[0]
+	var rim := _mat(Color(0.72, 0.74, 0.78), 0.9, 0.25)
 
 	# wheels: cylinder primitive through the modeler (rotated to lie across Z)
 	var tire := _mat(Color(0.03, 0.03, 0.035), 0.0, 0.85)
@@ -90,12 +116,22 @@ func _initialize() -> void:
 			var wn := _node("Wheel%d" % wheels, w, tire, car)
 			wn.rotation_degrees = Vector3(90, 0, 0)
 			wn.position = Vector3(wx, 0.36, sz)
+			var rc := CylinderMesh.new()
+			rc.top_radius = 0.2
+			rc.bottom_radius = 0.2
+			rc.height = 0.3
+			rc.radial_segments = 24
+			var ro = Ops.from_primitive(rc)
+			var rn := _node("Rim%d" % wheels, ro, rim, car)
+			rn.rotation_degrees = Vector3(90, 0, 0)
+			rn.position = Vector3(wx, 0.36, sz)
 			wheels += 1
 	ok("wheels", wheels == 4, str(wheels))
+	var part_count: int = car.get_child_count()
 	var total := 0
 	for c in car.get_children():
 		total += (c as MeshInstance3D).mesh.get_faces().size() / 3
-	ok("car_tris", total > 1500, str(total))
+	ok("car_tris", total > 2000, str(total))
 
 	var root_n := Node3D.new()
 	root_n.add_child(car)
@@ -113,7 +149,7 @@ func _initialize() -> void:
 	err = doc2.append_from_file("res://ak_car_modeler.glb", st2)
 	var back: Node = doc2.generate_scene(st2) if err == OK else null
 	var nm: int = back.find_children("*", "MeshInstance3D", true, false).size() if back else 0
-	ok("gltf_reimport_meshes", nm == 6, str(nm))
+	ok("gltf_reimport_meshes", nm == part_count, "%d of %d" % [nm, part_count])
 
 	var vp := root
 	var env := WorldEnvironment.new()
