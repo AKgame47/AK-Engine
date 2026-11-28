@@ -107,6 +107,14 @@ func _initialize() -> void:
 	var inner_y: float = bm.tri_center(btop[0]).y
 	ok("bevel_face_depth", absf(inner_y - 0.4) < 0.0001, "inner y %f" % inner_y)
 	ok("bevel_face_counts", bm.tri_count() == 12 + 8 + 8 and bm.verts.size() == 8 + 4 + 4, "%d tris %d verts" % [bm.tri_count(), bm.verts.size()])
+	var xm = Ops.from_primitive(BoxMesh.new())
+	var xsel: PackedInt32Array = xm.select_by_aabb(AABB(Vector3(-1, 0.4, -1), Vector3(2, 1, 2)))
+	xm.extrude(xsel, 0.3)
+	var xflip: int = 0
+	for t in xm.tri_count():
+		if xm.tri_normal(t).dot(xm.tri_center(t)) < -0.0001:
+			xflip += 1
+	ok("extrude_winding_outward", xflip == 0, str(xflip))
 	var plug = load("res://addons/ak_modeler/plugin.gd")
 	ok("plugin_script_parses", plug != null and plug.can_instantiate(), "parse and compile only, UI not opened")
 	print("MODELER_TEST DONE")
