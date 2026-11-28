@@ -76,6 +76,16 @@ func _initialize() -> void:
 	_shift(cab, Vector3(-0.3, 1.075, 0))
 	var glass := _mat(Color(0.08, 0.1, 0.13), 0.3, 0.1)
 	_node("Cabin", cab, glass, car)
+	# body-colour roof skin and pillars so the cabin reads as glass between painted frames
+	var roofp = _box(Ops, Vector3(1.3, 0.05, 1.15), Vector3.ZERO, paint, "RoofSkin", car, 2)
+	roofp.smooth(1, 0.3)
+	_shift(roofp, Vector3(-0.3, 1.33, 0))
+	_node("RoofSkin", roofp, paint, car)
+	for px in [-0.3, 0.55, -1.05]:
+		var pl = _box(Ops, Vector3(0.09, 0.4, 1.72), Vector3.ZERO, paint, "Pillar", car)
+		_shift(pl, Vector3(px, 1.12, 0))
+		_node("Pillar%d" % int(px * 100), pl, paint, car)
+	ok("roof_pillars", roofp.tri_count() > 0, str(roofp.tri_count()))
 	ok("cabin_roof_sel", roof.size() > 0, str(roof.size()))
 	ok("slopes_moved", nose > 0 and tail > 0 and wind > 0 and rear > 0, "nose %d tail %d windshield %d rear %d" % [nose, tail, wind, rear])
 
